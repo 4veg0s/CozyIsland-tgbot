@@ -17,12 +17,17 @@ public class CallbackConstants {
     public static final String DONATE_FOOD = "DONATE_FOOD";
     public static final String DONATE_HOUSEKEEPING = "DONATE_HOUSEKEEPING";
 
+    // РАЗДЕЛ "ОТЗЫВЫ"
+    public static final String FEEDBACK_SHOW = "FEEDBACK_SHOW";
+    public static final String FEEDBACK_NEW = "FEEDBACK_NEW";
+
+
     // РАЗДЕЛ "ОСТАВИТЬ ОТЗЫВ"
-    public static final String FEEDBACK_1 = "FEEDBACK_1";
-    public static final String FEEDBACK_2 = "FEEDBACK_2";
-    public static final String FEEDBACK_3 = "FEEDBACK_3";
-    public static final String FEEDBACK_4 = "FEEDBACK_4";
-    public static final String FEEDBACK_5 = "FEEDBACK_5";
+    public static final String FEEDBACK_NEW_1 = "FEEDBACK_1";
+    public static final String FEEDBACK_NEW_2 = "FEEDBACK_2";
+    public static final String FEEDBACK_NEW_3 = "FEEDBACK_3";
+    public static final String FEEDBACK_NEW_4 = "FEEDBACK_4";
+    public static final String FEEDBACK_NEW_5 = "FEEDBACK_5";
 
 
     public static final String RETURN_TO_MENU = "RETURN_TO_MENU";

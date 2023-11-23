@@ -9,12 +9,17 @@ import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.Contact;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
@@ -24,13 +29,15 @@ import java.util.List;
 @Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
-    static final String START_TEXT = "Привет, %s! Добро пожаловать на <b>Островок тепла</b>!";
+    static final String START_TEXT = EmojiParser.parseToUnicode("Привет, %s!\n" +
+            "Добро пожаловать на \n" +
+            ":feet:<b>Островок тепла</b>:feet:!");
 
-    // TODO: добавить стикеры из emoji java
-    static final String HELP_TEXT = "Мы предоставляем профессиональную ветеринарную помощь животным." +
+    // TODO: добавить стикеры из emojipedia
+    static final String HELP_TEXT = EmojiParser.parseToUnicode("Мы предоставляем профессиональную ветеринарную помощь животным. " +
             "Осуществляем профилактику заболеваний, проводим регулярные осмотры и лечение животных" +
             ", которые нуждаются в медицинской помощи." +
-            " Заботимся о заведении медицинской истории каждого питомца\n\n";
+            " Заботимся о заведении медицинской истории каждого питомца\n\n");
     final BotConfig config;
     List<Long> superUsers;
     List<BotCommand> listOfCommands;
@@ -43,6 +50,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         listOfCommands = new ArrayList<>();
         listOfCommands.add(new BotCommand("/start", "начать общение"));
+        listOfCommands.add(new BotCommand("/menu", "вызвать главное меню"));
         listOfCommands.add(new BotCommand("/help", "справочная информация"));
 
         try {
@@ -72,8 +80,18 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "/start" -> {
                     startCommandReceived(update);
                 }
+                case "/menu" -> {
+                    menuCommandReceived(chatId);
+                }
                 case "/help" -> {
                     helpCommandReceived(update);
+                }
+                default -> {
+                    // FIXME
+                    Message message = update.getMessage();
+                    if (update.getMessage().hasContact()) {
+                        contactReceived(update);
+                    }
                 }
             }
         } else if (update.hasCallbackQuery()) {
@@ -95,29 +113,104 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case CallbackConstants.RETURN_TO_MENU -> {
                     inlineReturnToMenu(update);
                 }
+                case CallbackConstants.FEEDBACK_SHOW -> {
+                    // TODO: просмотреть отзывы
+                }
+                case CallbackConstants.FEEDBACK_NEW -> {
+                    inlineFeedbackNew(update);
+                }
             }
         }
+    }
+    // TODO: обработать получение контакта пользователя
+    private void contactReceived(Update update) {
+        Contact contact = update.getMessage().getContact();
+        String phoneNumber = contact.getPhoneNumber();
+
+        System.out.println(update.getMessage().getChatId());
+        System.out.println(contact.getUserId());
+
+        String textToSend = "Ха-ха у меня есть твой номер " + phoneNumber + "\nСейчас я его солью, чтобы тебе звонил спам";
+
+        sendMessage(contact.getUserId(), textToSend);
+        menuCommandReceived(contact.getUserId());
+    }
+
+    private void inlineFeedbackNew(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+        String textToSend = "Оставьте Ваш отзыв о нашем приюте";
+        EditMessageText message = editMessage(chatId, messageId, textToSend, newFeedbackInlineMarkup());
+        executeMessage(message);
     }
 
     private void inlineReturnToMenu(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
-        int messageId = update.getMessage().getMessageId();
-        EditMessageText message = editMessage(chatId, messageId, "Возврат в главное меню");
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+        EditMessageText message = editMessage(chatId, messageId, "<b>Главное меню</b> нашего приюта", mainMenuInlineMarkup());
         executeMessage(message);
-        startCommandReceived(update);
     }
 
     private void inlineVolunteer(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+
+        // TODO: текст для волонтера
+        String textToSend = "Чтобы оставить заявку на волонтерскую помощь нашему приюту, " +
+                "отправьте нам свой контакт, нажав на кнопку внизу, и мы свяжемся с Вами";
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+        inlineKeyboardMarkup.setKeyboard(rowsInline);
+
+        EditMessageText message = editMessage(chatId, messageId, textToSend, inlineKeyboardMarkup);
+
+        executeMessage(message);
     }
 
     private void inlineFeedback(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
-        sendMessage(chatId, "Раздел отзывов", myFeedbackMenuInlineMarkup());
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+        String textToSend = ":speech_balloon: <b>Раздел отзывов</b> :speech_balloon:";
+
+        EditMessageText message = editMessage(chatId, messageId, textToSend, feedbackMenuInlineMarkup());
+
+        executeMessage(message);
     }
 
-    private ReplyKeyboard feedbackMenuInlineMarkup() {
+    private InlineKeyboardMarkup feedbackMenuInlineMarkup() {
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
 
-        return null;
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Просмотреть отзывы", CallbackConstants.FEEDBACK_SHOW))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Оставить отзыв", CallbackConstants.FEEDBACK_NEW))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+        keyboardMarkup.setKeyboard(rowsInline);
+
+        return keyboardMarkup;
+    }
+
+    private InlineKeyboardMarkup newFeedbackInlineMarkup() {
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_1));
+        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_2));
+        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_3));
+        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_4));
+        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_5));
+        rowsInline.add(row);
+
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Назад", CallbackConstants.BACK))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+        keyboardMarkup.setKeyboard(rowsInline);
+
+        return keyboardMarkup;
     }
 
     private void inlinePets(Update update) {
@@ -133,21 +226,52 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         String startResponse = String.format(START_TEXT, name);
 
-        sendMessage(chatId, startResponse, menuInlineMarkup());
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        replyKeyboardMarkup.setSelective(true);
+        replyKeyboardMarkup.setIsPersistent(false);
+        replyKeyboardMarkup.setOneTimeKeyboard(false);
+
+        KeyboardButton button = new KeyboardButton();
+        button.setRequestContact(true);
+        button.setText(EmojiParser.parseToUnicode("Отправить свой контакт :telephone:"));
+
+        List<KeyboardRow> keyboardRows = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+        row.add(button);
+
+        keyboardRows.add(row);
+
+        replyKeyboardMarkup.setKeyboard(keyboardRows);
+
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(startResponse);
+        message.setParseMode(ParseMode.HTML);
+        message.setReplyMarkup(replyKeyboardMarkup);
+
+        //sendMessage(chatId, startResponse);
+        executeMessage(message);
+
+        menuCommandReceived(chatId);
+    }
+
+    private void menuCommandReceived(long chatId) {
+        sendMessage(chatId, "<b>Главное меню</b> нашего приюта", mainMenuInlineMarkup());
     }
 
     private void helpCommandReceived(Update update) {
         long chatId = update.getMessage().getChatId();
         String userName = update.getMessage().getChat().getUserName();
 
-        sendMessage(chatId, EmojiParser.parseToUnicode(HELP_TEXT));
+        sendMessage(chatId, HELP_TEXT);
         log.info("Replied to HELP command from user https://t.me/" + userName + " with chatId = " + chatId);
     }
 
     private void sendMessage(long chatId, String textToSend) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
-        message.setText(textToSend);
+        message.setText(EmojiParser.parseToUnicode(textToSend));
         message.setParseMode(ParseMode.HTML);
 
         executeMessage(message);
@@ -156,7 +280,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void sendMessage(long chatId, String textToSend, ReplyKeyboard keyboardMarkup) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
-        message.setText(textToSend);
+        message.setText(EmojiParser.parseToUnicode(textToSend));
         message.setParseMode(ParseMode.HTML);
         message.setReplyMarkup(keyboardMarkup);
 
@@ -186,7 +310,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         message.setChatId(chatId);
         message.setMessageId(messageId);
-        message.setText(textToSend);
+        message.setParseMode(ParseMode.HTML);
+        message.setText(EmojiParser.parseToUnicode(textToSend));
 
         return message;
     }
@@ -196,7 +321,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         message.setChatId(chatId);
         message.setMessageId(messageId);
-        message.setText(textToSend);
+        message.setParseMode(ParseMode.HTML);
+        message.setText(EmojiParser.parseToUnicode(textToSend));
         message.setReplyMarkup(inlineKeyboardMarkup);
 
         return message;
@@ -204,38 +330,19 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private InlineKeyboardButton createInlineButton(String name, String callbackData) {
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText(name);
+        button.setText(EmojiParser.parseToUnicode(name));
         button.setCallbackData(callbackData);
 
         return button;
     }
 
-    private InlineKeyboardMarkup menuInlineMarkup() {
+    private InlineKeyboardMarkup mainMenuInlineMarkup() {
         InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Питомцы", CallbackConstants.PETS))));
         rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Пожертвовать", CallbackConstants.DONATE))));
         rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Хочу стать волонтером", CallbackConstants.VOLUNTEER))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Оставить отзыв", CallbackConstants.FEEDBACK))));
-
-        keyboardMarkup.setKeyboard(rowsInline);
-
-        return keyboardMarkup;
-    }
-
-    private InlineKeyboardMarkup myFeedbackMenuInlineMarkup() {
-        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-        List<InlineKeyboardButton> row = new ArrayList<>();
-        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_1));
-        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_2));
-        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_3));
-        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_4));
-        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_5));
-        rowsInline.add(row);
-
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Назад", CallbackConstants.BACK))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("В главное меню", CallbackConstants.RETURN_TO_MENU))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Отзывы", CallbackConstants.FEEDBACK))));
 
         keyboardMarkup.setKeyboard(rowsInline);
 
