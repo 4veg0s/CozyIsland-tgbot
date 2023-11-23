@@ -14,9 +14,11 @@ import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -32,6 +34,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     final BotConfig config;
     List<Long> superUsers;
     List<BotCommand> listOfCommands;
+
     public TelegramBot(BotConfig config) {
         this.config = config;
 
@@ -48,6 +51,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             log.error("Error while setting up bot command list: " + e.getMessage());
         }
     }
+
     @Override
     public String getBotUsername() {
         return config.getBotName();
@@ -72,7 +76,55 @@ public class TelegramBot extends TelegramLongPollingBot {
                     helpCommandReceived(update);
                 }
             }
+        } else if (update.hasCallbackQuery()) {
+            String callbackData = update.getCallbackQuery().getData();
+
+            switch (callbackData) {
+                case CallbackConstants.DONATE -> {
+                    inlineDonate(update);
+                }
+                case CallbackConstants.PETS -> {
+                    inlinePets(update);
+                }
+                case CallbackConstants.FEEDBACK -> {
+                    inlineFeedback(update);
+                }
+                case CallbackConstants.VOLUNTEER -> {
+                    inlineVolunteer(update);
+                }
+                case CallbackConstants.RETURN_TO_MENU -> {
+                    inlineReturnToMenu(update);
+                }
+            }
         }
+    }
+
+    private void inlineReturnToMenu(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        int messageId = update.getMessage().getMessageId();
+        EditMessageText message = editMessage(chatId, messageId, "Возврат в главное меню");
+        executeMessage(message);
+        startCommandReceived(update);
+    }
+
+    private void inlineVolunteer(Update update) {
+    }
+
+    private void inlineFeedback(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        sendMessage(chatId, "Раздел отзывов", myFeedbackMenuInlineMarkup());
+    }
+
+    private ReplyKeyboard feedbackMenuInlineMarkup() {
+
+        return null;
+    }
+
+    private void inlinePets(Update update) {
+
+    }
+
+    private void inlineDonate(Update update) {
     }
 
     private void startCommandReceived(Update update) {
@@ -81,8 +133,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         String startResponse = String.format(START_TEXT, name);
 
-        sendMessage(chatId, startResponse);
+        sendMessage(chatId, startResponse, menuInlineMarkup());
     }
+
     private void helpCommandReceived(Update update) {
         long chatId = update.getMessage().getChatId();
         String userName = update.getMessage().getChat().getUserName();
@@ -147,5 +200,68 @@ public class TelegramBot extends TelegramLongPollingBot {
         message.setReplyMarkup(inlineKeyboardMarkup);
 
         return message;
+    }
+
+    private InlineKeyboardButton createInlineButton(String name, String callbackData) {
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText(name);
+        button.setCallbackData(callbackData);
+
+        return button;
+    }
+
+    private InlineKeyboardMarkup menuInlineMarkup() {
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Питомцы", CallbackConstants.PETS))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Пожертвовать", CallbackConstants.DONATE))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Хочу стать волонтером", CallbackConstants.VOLUNTEER))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Оставить отзыв", CallbackConstants.FEEDBACK))));
+
+        keyboardMarkup.setKeyboard(rowsInline);
+
+        return keyboardMarkup;
+    }
+
+    private InlineKeyboardMarkup myFeedbackMenuInlineMarkup() {
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_1));
+        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_2));
+        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_3));
+        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_4));
+        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_5));
+        rowsInline.add(row);
+
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Назад", CallbackConstants.BACK))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("В главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+        keyboardMarkup.setKeyboard(rowsInline);
+
+        return keyboardMarkup;
+    }
+
+    private InlineKeyboardMarkup yesNoInlineMarkup(String callbackNameYes, String callbackNameNo) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+
+        var yesButton = new InlineKeyboardButton();
+        yesButton.setText("Да");
+        yesButton.setCallbackData(callbackNameYes);
+
+        var noButton = new InlineKeyboardButton();
+        noButton.setText("Нет");
+        noButton.setCallbackData(callbackNameNo);
+
+        row.add(yesButton);
+        row.add(noButton);
+
+        rowsInline.add(row);
+
+        inlineKeyboardMarkup.setKeyboard(rowsInline);
+
+        return inlineKeyboardMarkup;
     }
 }
