@@ -30,6 +30,9 @@ public class CallbackConstants {
     public static final String FEEDBACK_NEW_5 = "FEEDBACK_5";
 
 
+    // РАЗДЕЛ "Я ХОЧУ СТАТЬ ВОЛОНТЕРОМ"
+    public static final String VOLUNTEER_SEND_CONTACT = "VOLUNTEER_SEND_CONTACT";
+
     public static final String RETURN_TO_MENU = "RETURN_TO_MENU";
     public static final String BACK = "BACK";
 }
