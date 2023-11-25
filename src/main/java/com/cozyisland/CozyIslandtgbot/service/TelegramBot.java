@@ -1,8 +1,13 @@
 package com.cozyisland.CozyIslandtgbot.service;
 
 import com.cozyisland.CozyIslandtgbot.config.BotConfig;
+import com.cozyisland.CozyIslandtgbot.model.Pet;
+import com.cozyisland.CozyIslandtgbot.model.PetRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -24,6 +29,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +37,8 @@ import java.util.List;
 @Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
+    @Autowired
+    private PetRepository petRepository;
     static final String START_TEXT = EmojiParser.parseToUnicode("Привет, %s!\n" +
             "Добро пожаловать на \n" +
             ":feet:<b>Островок тепла</b>:feet:!");
@@ -44,7 +52,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     List<Long> superUsers;
     List<BotCommand> listOfCommands;
     int menuMessageId;
-
 
 
     public TelegramBot(BotConfig config) {
@@ -78,10 +85,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
-            String messageTest = update.getMessage().getText();
+            String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
 
-            switch (messageTest) {
+            switch (messageText) {
                 case "/start" -> {
                     startCommandReceived(update);
                 }
@@ -92,12 +99,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     helpCommandReceived(update);
                 }
                 default -> {
-                    if (messageTest.equals("Главное меню")) {
-                        if (menuMessageId != 0) {
-                            sendMessage(chatId, "Переход в главное меню", new ReplyKeyboardRemove(true, null));
-                        }
-                        menuCommandReceived(chatId);
-                    }
+                    unusualMessageReceived(update);
                 }
             }
         } else if (update.hasMessage() && update.getMessage().hasContact()) {
@@ -307,6 +309,18 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(chatId, startResponse);
 
         menuCommandReceived(chatId);
+
+        /*//FIXME
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            TypeFactory typeFactory = objectMapper.getTypeFactory();
+
+            List<Pet> petList = objectMapper.readValue(new File("db/petsDb.json"), typeFactory.constructCollectionType(List.class, Pet.class));
+            petRepository.saveAll(petList);
+        }
+        catch (Exception e) {
+            log.error(Arrays.toString(e.getStackTrace()));
+        }*/
     }
 
     private void menuCommandReceived(long chatId) {
@@ -438,5 +452,41 @@ public class TelegramBot extends TelegramLongPollingBot {
         inlineKeyboardMarkup.setKeyboard(rowsInline);
 
         return inlineKeyboardMarkup;
+    }
+
+    private void unusualMessageReceived(Update update) {
+        String messageText = update.getMessage().getText();
+        long chatId = update.getMessage().getChatId();
+
+        if (messageText.contains("/pets_db_init")) {
+            if (superUsers.contains(chatId)) {
+                initPetDb(chatId);
+            } else {
+                sendMessage(chatId, "Вы не имеете доступа к этой команде");
+            }
+        } else if (messageText.equals("Главное меню")) {
+            if (menuMessageId != 0) {
+                sendMessage(chatId, "Переход в главное меню", new ReplyKeyboardRemove(true, null));
+            }
+            menuCommandReceived(chatId);
+        } else {
+            sendMessage(chatId, "К сожалению, я пока не умею обрабатывать данную команду :(");
+        }
+
+    }
+
+    private void initPetDb(long chatId) {
+        //FIXME
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            TypeFactory typeFactory = objectMapper.getTypeFactory();
+
+            List<Pet> petList = objectMapper.readValue(new File("db/petsDb.json"), typeFactory.constructCollectionType(List.class, Pet.class));
+            petRepository.saveAll(petList);
+            sendMessage(chatId, "Инициализация БД питомцев прошла успешно");
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            sendMessage(chatId, "Ошибка инициализации БД питомцев");
+        }
     }
 }
