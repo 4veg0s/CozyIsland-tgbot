@@ -39,6 +39,42 @@ import java.util.stream.StreamSupport;
 @Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
+    private static final String DONATE_MONEY_TEXT = "Информация появится здесь позже";
+    private static final String DONATE_FOOD_TEXT = "<b>Для собак:</b>\n" +
+            "- <i>Chappi</i> говядина\n" +
+            "- <i>Organix</i> консервы для собак (с различными вкусами)\n" +
+            "- <i>Smart Dog</i> консервы для собак (с различными вкусами)\n" +
+            "- <i>Organix Adult Dog Turkey</i> для собак с индейкой для чувствительного пищеварения\n" +
+            "<b>Для кошек:</b>\n" +
+            "- <i>Florida</i> сухой корм для взрослых кошек \n" +
+            "- <i>Organix</i> консервы для взрослых кошек и котят (с различными вкусами)\n" +
+            "- <i>Royal Canin Mother&Babycat</i> мусс для котят";
+
+    private static final String DONATE_DRUGS_TEXT = "- Антибактериальные препараты\n" +
+            "- Инфузионные растворы\n" +
+            "- Нестероидные противовоспалительное\n" +
+            "- Инъекционные растворы\n" +
+            "- Салфетки, шприцы, лейкопластырь, перчатки, пеленки";
+    private static final String DONATE_HOUSEKEEPING_TEXT = "- дезинфицирующее средство \n" +
+            "- средства для мытья кафеля, полов, стен, столов\n" +
+            "- средства от ржавчины\n" +
+            "- жидкое мыло для рук\n" +
+            "- средства для мытья стеклянных поверхностей\n" +
+            "- средства для мытья посуды\n" +
+            "- тряпки для мытья полов, стен\n" +
+            "- губки для мытья мисок, посуды\n" +
+            "- полиэтиленовые мешки для мусора\n" +
+            "- перчатки х/б рабочие\n" +
+            "- перчатки резиновые плотные\n" +
+            "- веники\n" +
+            "- метлы пластиковые\n" +
+            "- совки (металлические с деревянной ручкой)\n" +
+            "- грабли\n" +
+            "- ведра\n" +
+            "- швабры\n" +
+            "- контейнеры для мусора\n" +
+            "- канцелярия (бумага для принтера, ручки, прозрачные файлы, бумага для записей, большие папки)\n" +
+            "- пледы, одеяла, покрывала, скатерти, ковролин, ковры";
     @Autowired
     private PetRepository petRepository;
 
@@ -174,16 +210,104 @@ public class TelegramBot extends TelegramLongPollingBot {
                         inlineVolunteerSendContact(update);
                     }
                 }
+            } else if (callbackData.startsWith("DONATE")) {
+                switch (callbackData) {
+                    case CallbackConstants.DONATE -> {
+                        inlineDonate(update);
+                    }
+                    case CallbackConstants.DONATE_MONEY -> {
+                        donateMoney(update);
+                    }
+                    case CallbackConstants.DONATE_FOOD -> {
+                        donateFood(update);
+                    }
+                    case CallbackConstants.DONATE_DRUGS -> {
+                        donateDrugs(update);
+                    }
+                    case CallbackConstants.DONATE_HOUSEKEEPING -> {
+                        donateHousekeeping(update);
+                    }
+                }
             }
             switch (callbackData) {
-                case CallbackConstants.DONATE -> {
-                    inlineDonate(update);
-                }
                 case CallbackConstants.RETURN_TO_MENU -> {
                     inlineReturnToMenu(update);
                 }
             }
         }
+    }
+
+    private void donateMoney(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+
+        String textToSend = DONATE_MONEY_TEXT;
+
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Назад", CallbackConstants.DONATE))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+        keyboardMarkup.setKeyboard(rowsInline);
+
+        EditMessageText message = editMessage(chatId, messageId, textToSend, keyboardMarkup);
+        executeMessage(message);
+    }
+
+
+    private void donateFood(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+
+        String textToSend = DONATE_FOOD_TEXT;
+
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Назад", CallbackConstants.DONATE))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+        keyboardMarkup.setKeyboard(rowsInline);
+
+        EditMessageText message = editMessage(chatId, messageId, textToSend, keyboardMarkup);
+        executeMessage(message);
+    }
+
+    private void donateDrugs(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+
+        String textToSend = DONATE_DRUGS_TEXT;
+
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Назад", CallbackConstants.DONATE))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+        keyboardMarkup.setKeyboard(rowsInline);
+
+        EditMessageText message = editMessage(chatId, messageId, textToSend, keyboardMarkup);
+        executeMessage(message);
+    }
+
+    private void donateHousekeeping(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+
+        String textToSend = DONATE_HOUSEKEEPING_TEXT;
+
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Назад", CallbackConstants.DONATE))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+        keyboardMarkup.setKeyboard(rowsInline);
+
+        EditMessageText message = editMessage(chatId, messageId, textToSend, keyboardMarkup);
+        executeMessage(message);
     }
 
     private void saveNewPet(Update update) {
@@ -512,7 +636,32 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void inlineDonate(Update update) {
         setMenuMessageId(update.getCallbackQuery().getMessage().getMessageId());
+
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+        String textToSend = "<b>Раздел пожертвований</b>\n" +
+                "Мы принимаем:";
+
+        EditMessageText message = editMessage(chatId, messageId, textToSend, donateMenuInlineMarkup());
+
+        executeMessage(message);
     }
+
+    private InlineKeyboardMarkup donateMenuInlineMarkup() {
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Деньги :money_with_wings:", CallbackConstants.DONATE_MONEY))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Корм и консервы :stew:", CallbackConstants.DONATE_FOOD))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Лекарства :pill:", CallbackConstants.DONATE_DRUGS))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Хозяйственные нужды :broom:", CallbackConstants.DONATE_HOUSEKEEPING))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+        keyboardMarkup.setKeyboard(rowsInline);
+
+        return keyboardMarkup;
+    }
+
 
     private void setMenuMessageId(int messageId) {
         if (this.menuMessageId != messageId) {
