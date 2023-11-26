@@ -11,6 +11,18 @@ public class CallbackConstants {
     public static final String FEEDBACK = "FEEDBACK";
     public static final String VOLUNTEER = "VOLUNTEER";
 
+    // РАЗДЕЛ "ПИТОМЦЫ"
+    public static final String PETS_PREVIOUS = "PETS_PREVIOUS";
+    public static final String PETS_NEXT = "PETS_NEXT";
+    public static final String PETS_TAKE = "PETS_TAKE"; // хочу забрать
+    public static final String PETS_ADD = "PETS_ADD";
+    public static final String PETS_EDIT = "PETS_EDIT";
+    public static final String PETS_DELETE = "PETS_DELETE";
+
+    // подтверждение или отмена добавления нового питомца через админа
+    public static final String PETS_ADD_CONFIRM = "PETS_ADD_CONFIRM";
+    public static final String PETS_ADD_CANCEL = "PETS_ADD_CANCEL";
+
     // РАЗДЕЛ "ПОЖЕРТВОВАТЬ"
     public static final String DONATE_MONEY = "DONATE_MONEY";
     public static final String DONATE_DRUGS = "DONATE_DRUGS";

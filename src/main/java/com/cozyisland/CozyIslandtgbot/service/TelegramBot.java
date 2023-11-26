@@ -1,23 +1,22 @@
 package com.cozyisland.CozyIslandtgbot.service;
 
 import com.cozyisland.CozyIslandtgbot.config.BotConfig;
-import com.cozyisland.CozyIslandtgbot.model.Pet;
-import com.cozyisland.CozyIslandtgbot.model.PetRepository;
+import com.cozyisland.CozyIslandtgbot.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.Contact;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -30,15 +29,24 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
     @Autowired
     private PetRepository petRepository;
+
+    // FIXME
+    //@Autowired
+    private PetImageRepository petImageRepository;
+    //@Autowired
+    private BinaryContentRepository binaryContentRepository;
     static final String START_TEXT = EmojiParser.parseToUnicode("Привет, %s!\n" +
             "Добро пожаловать на \n" +
             ":feet:<b>Островок тепла</b>:feet:!");
@@ -48,10 +56,22 @@ public class TelegramBot extends TelegramLongPollingBot {
             "Осуществляем профилактику заболеваний, проводим регулярные осмотры и лечение животных" +
             ", которые нуждаются в медицинской помощи." +
             " Заботимся о заведении медицинской истории каждого питомца\n\n");
+    static final String PET_DATA_TEMPLATE = "<b>Информация о питомце</b>%n%n" +
+            "<b>Номер:</b> %d%n" +
+            "<b>Категория:</b> %s%n" +
+            "<b>Кличка:</b> %s%n" +
+            "<b>Возраст:</b> %s%n" +
+            "<b>Стерилизован(а):</b> %s%n" +
+            "<b>Характер:</b> %s%n%n" +
+            "<i>%d/%d</i>";
+    //"Возраст: %s%n";
     final BotConfig config;
     List<Long> superUsers;
     List<BotCommand> listOfCommands;
     int menuMessageId;
+    List<Pet> petList;
+    int currentPetIndex;
+    boolean petAddMode = false;
 
 
     public TelegramBot(BotConfig config) {
@@ -104,35 +124,239 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         } else if (update.hasMessage() && update.getMessage().hasContact()) {
             contactReceived(update);
+        /*} else if (update.hasMessage() && update.getMessage().hasPhoto()) {
+            photoReceived(update);*/
         } else if (update.hasCallbackQuery()) {
             String callbackData = update.getCallbackQuery().getData();
 
+            if (callbackData.startsWith("PETS")) {
+                switch (callbackData) {
+                    case CallbackConstants.PETS -> {
+                        inlinePets(update);
+                    }
+                    case CallbackConstants.PETS_PREVIOUS -> {
+                        previousPet(update);
+                    }
+                    case CallbackConstants.PETS_NEXT -> {
+                        nextPet(update);
+                    }
+                    case CallbackConstants.PETS_DELETE -> {
+                        deletePet(update);
+                    }
+                    case CallbackConstants.PETS_ADD -> {
+                        addPet(update);
+                    }
+                    case CallbackConstants.PETS_ADD_CONFIRM -> {
+                        saveNewPet(update);
+                    }
+                    case CallbackConstants.PETS_ADD_CANCEL -> {
+                        addPet(update);
+                    }
+                }
+            } else if (callbackData.startsWith("FEEDBACK")) {
+                switch (callbackData) {
+                    case CallbackConstants.FEEDBACK -> {
+                        inlineFeedback(update);
+                    }
+                    case CallbackConstants.FEEDBACK_SHOW -> {
+                        // TODO: просмотреть отзывы
+                    }
+                    case CallbackConstants.FEEDBACK_NEW -> {
+                        inlineFeedbackNew(update);
+                    }
+                }
+            } else if (callbackData.startsWith("VOLUNTEER")) {
+                switch (callbackData) {
+                    case CallbackConstants.VOLUNTEER -> {
+                        inlineVolunteer(update);
+                    }
+                    case CallbackConstants.VOLUNTEER_SEND_CONTACT -> {
+                        inlineVolunteerSendContact(update);
+                    }
+                }
+            }
             switch (callbackData) {
                 case CallbackConstants.DONATE -> {
                     inlineDonate(update);
                 }
-                case CallbackConstants.PETS -> {
-                    inlinePets(update);
-                }
-                case CallbackConstants.FEEDBACK -> {
-                    inlineFeedback(update);
-                }
-                case CallbackConstants.VOLUNTEER -> {
-                    inlineVolunteer(update);
-                }
-                case CallbackConstants.VOLUNTEER_SEND_CONTACT -> {
-                    inlineVolunteerSendContact(update);
-                }
                 case CallbackConstants.RETURN_TO_MENU -> {
                     inlineReturnToMenu(update);
                 }
-                case CallbackConstants.FEEDBACK_SHOW -> {
-                    // TODO: просмотреть отзывы
-                }
-                case CallbackConstants.FEEDBACK_NEW -> {
-                    inlineFeedbackNew(update);
-                }
             }
+        }
+    }
+
+    private void saveNewPet(Update update) {
+        String messageText = update.getCallbackQuery().getMessage().getText();
+        String hiddenCommand = messageText.substring(0, messageText.indexOf("\n"));
+
+        Pet transientNewPet = parsePet(hiddenCommand);
+
+        saveToPetRepository(transientNewPet);
+
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        String textToSend = "Новый питомец успешно добавлен";
+
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Питомцы", CallbackConstants.PETS))));
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+        keyboardMarkup.setKeyboard(rowsInline);
+
+        EditMessageText message = editMessage(chatId, menuMessageId, textToSend, keyboardMarkup);
+        executeMessage(message);
+    }
+
+    private void saveToPetRepository(Pet transientNewPet) {
+        petRepository.save(transientNewPet);
+        log.info("Added new pet to petRepository: " + transientNewPet.toString());
+    }
+
+    private void addPet(Update update) {
+        petAddMode = true;
+
+        Pet defaultPet = new Pet();
+
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        String textToSend = petTemplateInsert(defaultPet) +
+                "\n\n(порядок аргументов:point_up_2:)\n" +
+                "Введите данные нового питомца аналогично примеру:\n" +
+                "/pet Кошка; Искорка; 6 месяцев; false; аккуратная, ласковая";
+
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Отмена", CallbackConstants.PETS))));
+
+        keyboardMarkup.setKeyboard(rowsInline);
+
+        EditMessageText message = editMessage(chatId, menuMessageId, textToSend, keyboardMarkup);
+
+        executeMessage(message);
+    }
+
+    private void deletePet(Update update) {
+        Pet currentPet = petList.get(currentPetIndex);
+        if (petRepository.findById(currentPet.getId()).isEmpty()) {
+            log.error("Couldn't find pet in petList");
+        } else {
+            petRepository.deleteById(currentPet.getId());
+            log.info("Successfully deleted from petList: " + currentPet.toString());
+            if (currentPetIndex == 0) currentPetIndex++;
+        }
+
+        petList = reloadPetList();
+        previousPet(update);
+    }
+
+    private void previousPet(Update update) {
+        currentPetIndex = (currentPetIndex == 0) ? petList.size() - 1 : --currentPetIndex;
+        showPet(petList, currentPetIndex, update);
+    }
+
+    private void nextPet(Update update) {
+        currentPetIndex = (currentPetIndex == petList.size() - 1) ? 0 : ++currentPetIndex;
+        showPet(petList, currentPetIndex, update);
+    }
+
+    private void inlinePets(Update update) {
+        setMenuMessageId(update.getCallbackQuery().getMessage().getMessageId());
+
+        if (petAddMode)
+            petAddMode = false;     // если ожидался новый питомец, но был выход из команды - отмена режима редактирования
+
+        petList = reloadPetList();
+        currentPetIndex = 0;
+
+        showPet(petList, currentPetIndex, update);
+    }
+
+    private List<Pet> reloadPetList() {
+        return new ArrayList<>(StreamSupport
+                .stream(petRepository.findAll().spliterator(), false)
+                .collect(Collectors.toList()));
+    }
+
+    private void showPet(List<Pet> petList, int currentPetIndex, Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+        if (petList.size() == 0) {
+            sendMessage(chatId, "На данный момент в приюте нет ни одного питомца");
+        } else {
+            Pet currentPet = petList.get(currentPetIndex);
+            String petInfo = petTemplateInsert(currentPet);
+            EditMessageText message = editMessage(chatId, messageId, petInfo, petsMenuInlineMarkup(chatId));
+            executeMessage(message);
+        }
+    }
+
+    private String petTemplateInsert(Pet currentPet) {
+        return String.format(PET_DATA_TEMPLATE, currentPetIndex + 1,
+                currentPet.getCategory(),
+                currentPet.getName(),
+                currentPet.getAge(),
+                ((currentPet.isSterilized()) ? "да" : "нет"),
+                currentPet.getAbout(),
+                currentPetIndex + 1,
+                petList.size()
+        );
+    }
+
+    private InlineKeyboardMarkup petsMenuInlineMarkup(long chatId) {
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        if (petList.size() > 1)
+            row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.PETS_PREVIOUS));
+        row.add(createInlineButton(EmojiParser.parseToUnicode("Забрать"), CallbackConstants.PETS_TAKE));
+        if (petList.size() > 1)
+            row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_right:"), CallbackConstants.PETS_NEXT));
+        rowsInline.add(row);
+
+        if (superUsers.contains(chatId)) {
+            rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Добавить", CallbackConstants.PETS_ADD))));
+            rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Редактировать", CallbackConstants.PETS_EDIT))));
+            rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Удалить", CallbackConstants.PETS_DELETE))));
+        }
+
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+        keyboardMarkup.setKeyboard(rowsInline);
+
+        return keyboardMarkup;
+    }
+
+    private void photoReceived(Update update) {
+        BinaryContent transientBinaryContent = new BinaryContent();
+        transientBinaryContent.setFileAsArrayOfBytes(update.getMessage().getPhoto().get(1).getFileId().getBytes());
+
+        BinaryContent persistantBinaryContent = binaryContentRepository.save(transientBinaryContent);
+
+        PetImage transientPetImage = new PetImage();
+        transientPetImage.builder()
+                .binaryContent(persistantBinaryContent)
+                .build();
+
+        PetImage persistantPetImage = petImageRepository.save(transientPetImage);
+
+        File petImageFile = new File(persistantPetImage.getImageId() + ".txt");
+        try {
+            FileUtils.writeByteArrayToFile(petImageFile, persistantPetImage.getBinaryContent().getFileAsArrayOfBytes());
+        } catch (IOException e) {
+            log.error("Error while trying to write array of bytes to file: " + e.getMessage());
+        }
+
+        InputFile inputFile = new InputFile().setMedia(petImageFile);
+        SendPhoto photo = new SendPhoto();
+        photo.builder()
+                .chatId(update.getMessage().getChatId())
+                .caption(petImageFile.getPath())
+                .photo(inputFile)
+                .build();
+        try {
+            execute(photo);
+        } catch (TelegramApiException e) {
+            log.error("Error while executing SendPhoto: " + e.getMessage());
         }
     }
 
@@ -210,13 +434,13 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         sendMessage(chatId, textToSend, replyKeyboardMarkup);
     }
-
     // TODO: обработать получение контакта пользователя
+
     private void contactReceived(Update update) {
         Contact contact = update.getMessage().getContact();
         String phoneNumber = contact.getPhoneNumber();
 
-        String textToSend = "Ваш контакт (+" + phoneNumber + ") передан менеджеру\n" +
+        String textToSend = "Ваш контакт (" + phoneNumber + ") передан менеджеру\n" +
                 "В ближайший рабочий день мы обработаем Вашу заявку и перезвоним Вам\n" +
                 "Ожидайте, пожалуйста";
 
@@ -247,7 +471,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         setMenuMessageId(update.getCallbackQuery().getMessage().getMessageId());
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
-        String textToSend = ":speech_balloon: <b>Раздел отзывов</b> :speech_balloon:";
+        String textToSend = "<b>Раздел отзывов</b> :speech_balloon:";
 
         EditMessageText message = editMessage(chatId, messageId, textToSend, feedbackMenuInlineMarkup());
 
@@ -278,16 +502,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_5));
         rowsInline.add(row);
 
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Назад", CallbackConstants.BACK))));
+        //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Назад", CallbackConstants.BACK))));
         rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
         keyboardMarkup.setKeyboard(rowsInline);
 
         return keyboardMarkup;
-    }
-
-    private void inlinePets(Update update) {
-        setMenuMessageId(update.getCallbackQuery().getMessage().getMessageId());
     }
 
     private void inlineDonate(Update update) {
@@ -309,18 +529,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(chatId, startResponse);
 
         menuCommandReceived(chatId);
-
-        /*//FIXME
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            TypeFactory typeFactory = objectMapper.getTypeFactory();
-
-            List<Pet> petList = objectMapper.readValue(new File("db/petsDb.json"), typeFactory.constructCollectionType(List.class, Pet.class));
-            petRepository.saveAll(petList);
-        }
-        catch (Exception e) {
-            log.error(Arrays.toString(e.getStackTrace()));
-        }*/
     }
 
     private void menuCommandReceived(long chatId) {
@@ -431,21 +639,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         return keyboardMarkup;
     }
 
-    private InlineKeyboardMarkup yesNoInlineMarkup(String callbackNameYes, String callbackNameNo) {
+    private InlineKeyboardMarkup twoButtonInlineMarkup(String buttonName1, String buttonName2, String callbackName1, String callbackName2) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> row = new ArrayList<>();
 
-        var yesButton = new InlineKeyboardButton();
-        yesButton.setText("Да");
-        yesButton.setCallbackData(callbackNameYes);
-
-        var noButton = new InlineKeyboardButton();
-        noButton.setText("Нет");
-        noButton.setCallbackData(callbackNameNo);
-
-        row.add(yesButton);
-        row.add(noButton);
+        row.add(createInlineButton(buttonName1, callbackName1));
+        row.add(createInlineButton(buttonName2, callbackName2));
 
         rowsInline.add(row);
 
@@ -463,6 +663,19 @@ public class TelegramBot extends TelegramLongPollingBot {
                 initPetDb(chatId);
             } else {
                 sendMessage(chatId, "Вы не имеете доступа к этой команде");
+                menuCommandReceived(chatId);
+            }
+        } else if (messageText.contains("/pet")) {
+            if (superUsers.contains(chatId)) {
+                if (petAddMode) {
+                    initAddPet(chatId, messageText);
+                } else {
+                    sendMessage(chatId, "Для включения режима добавления нажмите <b>Добавить</b> в разделе <b>Питомцы</b>");
+                    menuCommandReceived(chatId);
+                }
+            } else {
+                sendMessage(chatId, "Вы не имеете доступа к этой команде");
+                menuCommandReceived(chatId);
             }
         } else if (messageText.equals("Главное меню")) {
             if (menuMessageId != 0) {
@@ -470,13 +683,51 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             menuCommandReceived(chatId);
         } else {
-            sendMessage(chatId, "К сожалению, я пока не умею обрабатывать данную команду :(");
+            sendMessage(chatId, "Команда не распознана");
+            menuCommandReceived(chatId);
         }
 
     }
 
+    private void initAddPet(long chatId, String messageText) {
+        Pet transientNewPet = parsePet(messageText);
+
+        String textToSend = messageText + "\n" + petTemplateInsert(transientNewPet) +
+                "\n\n<b>Проверьте заполнение полей</b>";
+
+        EditMessageText message = editMessage(chatId,
+                menuMessageId,
+                textToSend,
+                twoButtonInlineMarkup(
+                        "Подтвердить",
+                        "Отмена",
+                        CallbackConstants.PETS_ADD_CONFIRM,
+                        CallbackConstants.PETS_ADD_CANCEL
+                )
+        );
+        executeMessage(message);
+    }
+
+    private Pet parsePet(String messageText) {
+        String petObject[] = messageText.split("/pet ")[1].split("; ");
+        Pet transientNewPet = new Pet();
+
+        //              0               1                 2                          3               4
+        // "category": "Кошка", "name": "Искорка", "age": "6 месяцев", "sterilized": false, "about": "аккуратная, ласковая", "imageId": 7
+
+        transientNewPet.setCategory(petObject[0]);
+        transientNewPet.setName(petObject[1]);
+        transientNewPet.setAge(petObject[2]);
+        transientNewPet.setSterilized(Boolean.parseBoolean(petObject[3]));
+        transientNewPet.setAbout(petObject[4]);
+        transientNewPet.setImageId((long) petList.size());
+
+        return transientNewPet;
+    }
+
     private void initPetDb(long chatId) {
         //FIXME
+        petRepository.deleteAll();
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             TypeFactory typeFactory = objectMapper.getTypeFactory();
@@ -484,6 +735,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             List<Pet> petList = objectMapper.readValue(new File("db/petsDb.json"), typeFactory.constructCollectionType(List.class, Pet.class));
             petRepository.saveAll(petList);
             sendMessage(chatId, "Инициализация БД питомцев прошла успешно");
+            petList = reloadPetList();
         } catch (Exception e) {
             log.error(e.getMessage());
             sendMessage(chatId, "Ошибка инициализации БД питомцев");
