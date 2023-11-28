@@ -9,8 +9,6 @@ import lombok.*;
 @Builder
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @Entity(name = "binaryContent")
 public class BinaryContent {
     @Id

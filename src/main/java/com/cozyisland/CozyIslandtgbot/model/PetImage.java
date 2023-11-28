@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
 @Entity(name = "petImages")

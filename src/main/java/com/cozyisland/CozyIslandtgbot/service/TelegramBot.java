@@ -28,7 +28,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,9 +81,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private PetRepository petRepository;
 
     // FIXME
-    //@Autowired
+    @Autowired
     private PetImageRepository petImageRepository;
-    //@Autowired
+    @Autowired
     private BinaryContentRepository binaryContentRepository;
     static final String START_TEXT = EmojiParser.parseToUnicode("Привет, %s!\n" +
             "Добро пожаловать на \n" +
@@ -160,8 +162,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         } else if (update.hasMessage() && update.getMessage().hasContact()) {
             contactReceived(update);
-        /*} else if (update.hasMessage() && update.getMessage().hasPhoto()) {
-            photoReceived(update);*/
+        } else if (update.hasMessage() && update.getMessage().hasPhoto()) {
+            photoReceived(update);
         } else if (update.hasCallbackQuery()) {
             String callbackData = update.getCallbackQuery().getData();
 
@@ -451,30 +453,30 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void photoReceived(Update update) {
-        BinaryContent transientBinaryContent = new BinaryContent();
-        transientBinaryContent.setFileAsArrayOfBytes(update.getMessage().getPhoto().get(1).getFileId().getBytes());
+        BinaryContent transientBinaryContent = BinaryContent.builder()
+                .fileAsArrayOfBytes(update.getMessage().getPhoto().get(1).getFileId().getBytes())
+                .build();
 
         BinaryContent persistantBinaryContent = binaryContentRepository.save(transientBinaryContent);
 
-        PetImage transientPetImage = new PetImage();
-        transientPetImage.builder()
+        PetImage transientPetImage = PetImage.builder()
                 .binaryContent(persistantBinaryContent)
                 .build();
 
         PetImage persistantPetImage = petImageRepository.save(transientPetImage);
-
-        File petImageFile = new File(persistantPetImage.getImageId() + ".txt");
+        String petImageFile = "petImage" + persistantPetImage.getImageId();
         try {
-            FileUtils.writeByteArrayToFile(petImageFile, persistantPetImage.getBinaryContent().getFileAsArrayOfBytes());
+            FileOutputStream fileOutputStream = new FileOutputStream(petImageFile);
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
+            bufferedOutputStream.write(persistantPetImage.getBinaryContent().getFileAsArrayOfBytes());
         } catch (IOException e) {
             log.error("Error while trying to write array of bytes to file: " + e.getMessage());
         }
 
         InputFile inputFile = new InputFile().setMedia(petImageFile);
-        SendPhoto photo = new SendPhoto();
-        photo.builder()
+        SendPhoto photo = SendPhoto.builder()
                 .chatId(update.getMessage().getChatId())
-                .caption(petImageFile.getPath())
+                .caption(petImageFile)
                 .photo(inputFile)
                 .build();
         try {
@@ -728,6 +730,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void executeMessage(SendMessage message) {
         try {
+            // TODO: реализовать возврат айди отправленного сообщения
             execute(message);
             log.info("Message sent successfully to user with chatId = " + message.getChatId());
         } catch (TelegramApiException e) {
