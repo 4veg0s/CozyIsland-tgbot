@@ -42,8 +42,19 @@ public class CallbackConstants {
     public static final String FEEDBACK_NEW_5 = "FEEDBACK_5";
 
 
-    // РАЗДЕЛ "Я ХОЧУ СТАТЬ ВОЛОНТЕРОМ"
+    // РАЗДЕЛ "ВОЛОНТЕРСТВО"
+    public static final String VOLUNTEER_APPLICATIONS = "VOLUNTEER_APPLICATIONS";
     public static final String VOLUNTEER_SEND_CONTACT = "VOLUNTEER_SEND_CONTACT";
+    public static final String VOLUNTEER_APPLICATIONS_PREVIOUS = "VOLUNTEER_APPLICATIONS_PREVIOUS";
+    public static final String VOLUNTEER_APPLICATIONS_NEXT = "VOLUNTEER_APPLICATIONS_NEXT";
+    public static final String VOLUNTEER_APPLICATIONS_APPROVE = "VOLUNTEER_APPLICATIONS_APPROVE"; // хочу забрать
+    public static final String VOLUNTEER_APPLICATIONS_ADD = "VOLUNTEER_APPLICATIONS_ADD";
+    public static final String VOLUNTEER_APPLICATIONS_EDIT = "VOLUNTEER_APPLICATIONS_EDIT";
+    public static final String VOLUNTEER_APPLICATIONS_DELETE = "VOLUNTEER_APPLICATIONS_DELETE";
+
+    // подтверждение или отмена добавления нового питомца через админа
+    public static final String VOLUNTEER_APPLICATIONS_ADD_CONFIRM = "VOLUNTEER_APPLICATIONS_ADD_CONFIRM";
+    public static final String VOLUNTEER_APPLICATIONS_ADD_CANCEL = "VOLUNTEER_APPLICATIONS_ADD_CANCEL";
 
     public static final String RETURN_TO_MENU = "RETURN_TO_MENU";
     public static final String BACK = "BACK";

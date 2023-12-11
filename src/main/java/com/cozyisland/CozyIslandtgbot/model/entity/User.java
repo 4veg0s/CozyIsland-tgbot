@@ -1,4 +1,4 @@
-package com.cozyisland.CozyIslandtgbot.model;
+package com.cozyisland.CozyIslandtgbot.model.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
