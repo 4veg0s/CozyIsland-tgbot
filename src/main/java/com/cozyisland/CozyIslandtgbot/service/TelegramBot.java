@@ -85,6 +85,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Autowired
     private VolunteerApplicationRepository volunteerApplicationRepository;
     @Autowired
+    private PetClaimApplicationRepository petClaimApplicationRepository;
+    @Autowired
     private PetImageRepository petImageRepository;
     @Autowired
     private BinaryContentRepository binaryContentRepository;
@@ -118,10 +120,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     List<Long> superUsers;
     List<BotCommand> listOfCommands;
     List<Pet> petList;
-    //int currentPetIndex;
     boolean petAddMode = false;
     List<VolunteerApplication> volunteerApplicationList;
-    //int currentVolunteerApplicationIndex;
+    List<PetClaimApplication> petClaimApplicationList;
 
 
     public TelegramBot(BotConfig config) {
@@ -183,6 +184,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                 switch (callbackData) {
                     case CallbackConstants.PETS -> {
                         inlinePets(update);
+                    }
+                    case CallbackConstants.PETS_CLAIM -> {
+                        claimPet(update);
                     }
                     case CallbackConstants.PETS_PREVIOUS -> {
                         previousPet(update);
@@ -271,6 +275,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
     }
+
 
     private void donateMoney(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
@@ -479,17 +484,81 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<InlineKeyboardButton> row = new ArrayList<>();
         if (petList.size() > 1) {
             row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.PETS_PREVIOUS));
-            row.add(createInlineButton(EmojiParser.parseToUnicode("Забрать"), CallbackConstants.PETS_TAKE));
+            row.add(createInlineButton(EmojiParser.parseToUnicode("Забрать"), CallbackConstants.PETS_CLAIM));
             row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_right:"), CallbackConstants.PETS_NEXT));
         }
         rowsInline.add(row);
 
         if (superUsers.contains(chatId)) {
-            rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Добавить", CallbackConstants.PETS_ADD))));
-            rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Редактировать", CallbackConstants.PETS_EDIT))));
-            rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Удалить", CallbackConstants.PETS_DELETE))));
+            rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":crown:Добавить:crown:", CallbackConstants.PETS_ADD))));
+            //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":crown:Редактировать:crown:", CallbackConstants.PETS_EDIT))));
+            rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":crown:Удалить:crown:", CallbackConstants.PETS_DELETE))));
         }
 
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+        keyboardMarkup.setKeyboard(rowsInline);
+
+        return keyboardMarkup;
+    }
+
+    private void claimPet(Update update) {
+        registerPetClaimApplication(update);
+    }
+
+    private List<PetClaimApplication> reloadPetClaimApplicationList() {
+        return new ArrayList<>(StreamSupport
+                .stream(petClaimApplicationRepository.findAll().spliterator(), false)
+                .collect(Collectors.toList()));
+    }
+    private void registerPetClaimApplication(Update update) {
+        //Contact contact = update.getMessage().getContact();
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+
+        Pet chosenPet = petList.get(userRepository.findById(chatId).get().getCurrentListIndex());
+        PetClaimApplicationPK petClaimApplicationPK = new PetClaimApplicationPK(chosenPet.getId(), chatId);
+        String textToSend;
+
+        if (petClaimApplicationRepository.findById(petClaimApplicationPK).isEmpty()) {
+            PetClaimApplication petClaimApplication = PetClaimApplication.builder()
+                    .pk(petClaimApplicationPK)
+                    .firstname(update.getCallbackQuery().getMessage().getChat().getFirstName())
+                    .userName(update.getCallbackQuery().getMessage().getChat().getUserName())
+                    .status("на рассмотрении")
+                    .build();
+
+            petClaimApplicationRepository.save(petClaimApplication);
+
+            petClaimApplicationList = reloadPetClaimApplicationList();
+            adminNotification("PET_CLAIM");
+            log.info("Volunteer's application saved to repository: " + petClaimApplication);
+
+            textToSend = "Ваша заявка на питомца по кличке " + chosenPet.getName() + " передана менеджеру\n" +
+                    "В ближайший рабочий день мы обработаем Вашу заявку и пришлем дополнительную информацию\n" +
+                    "Ожидайте, пожалуйста";
+        } else {
+            textToSend = "Ваша предыдущая заявка на питомца по кличке " + chosenPet.getName() + " уже находится в обработке\n" +
+                    "Ожидайте, пожалуйста";
+        }
+
+        EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, petClaimApplicationInlineMarkup());
+        executeMessage(message);
+        /*sendMessage(contact.getUserId(), textToSend, new ReplyKeyboardRemove(true, null));
+
+        DeleteMessage message = new DeleteMessage();
+        message.setChatId(contact.getUserId());
+        message.setMessageId(userRepository.findById(contact.getUserId()).get().getMenuMessageId());
+        deleteMessage(message);
+
+        sendMessage(contact.getUserId(), "Переход в главное меню");
+        menuCommandReceived(contact.getUserId());*/
+    }
+
+    private InlineKeyboardMarkup petClaimApplicationInlineMarkup() {
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+
+        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Назад", CallbackConstants.PETS))));
         rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
         keyboardMarkup.setKeyboard(rowsInline);
@@ -625,7 +694,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Продолжить", CallbackConstants.VOLUNTEER_SEND_CONTACT))));
 
         if (superUsers.contains(chatId)) {
-            rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Заявки", CallbackConstants.VOLUNTEER_APPLICATIONS))));
+            rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":crown:Заявки:crown:", CallbackConstants.VOLUNTEER_APPLICATIONS))));
         }
 
         rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Главное меню", CallbackConstants.RETURN_TO_MENU))));
@@ -816,7 +885,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     log.info("Notified admin with chatId = " + adminId + " about new volunteer application");
                 }
             }
-            case "PET" -> {
+            case "PET_CLAIM" -> {
 
             }
             default -> {

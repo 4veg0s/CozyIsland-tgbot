@@ -14,7 +14,7 @@ public class CallbackConstants {
     // РАЗДЕЛ "ПИТОМЦЫ"
     public static final String PETS_PREVIOUS = "PETS_PREVIOUS";
     public static final String PETS_NEXT = "PETS_NEXT";
-    public static final String PETS_TAKE = "PETS_TAKE"; // хочу забрать
+    public static final String PETS_CLAIM = "PETS_CLAIM"; // хочу забрать
     public static final String PETS_ADD = "PETS_ADD";
     public static final String PETS_EDIT = "PETS_EDIT";
     public static final String PETS_DELETE = "PETS_DELETE";
@@ -47,14 +47,14 @@ public class CallbackConstants {
     public static final String VOLUNTEER_SEND_CONTACT = "VOLUNTEER_SEND_CONTACT";
     public static final String VOLUNTEER_APPLICATIONS_PREVIOUS = "VOLUNTEER_APPLICATIONS_PREVIOUS";
     public static final String VOLUNTEER_APPLICATIONS_NEXT = "VOLUNTEER_APPLICATIONS_NEXT";
-    public static final String VOLUNTEER_APPLICATIONS_APPROVE = "VOLUNTEER_APPLICATIONS_APPROVE"; // хочу забрать
+    public static final String VOLUNTEER_APPLICATIONS_APPROVE = "VOLUNTEER_APPLICATIONS_APPROVE"; // одобрить
     public static final String VOLUNTEER_APPLICATIONS_ADD = "VOLUNTEER_APPLICATIONS_ADD";
     public static final String VOLUNTEER_APPLICATIONS_EDIT = "VOLUNTEER_APPLICATIONS_EDIT";
     public static final String VOLUNTEER_APPLICATIONS_DELETE = "VOLUNTEER_APPLICATIONS_DELETE";
 
     // подтверждение или отмена добавления нового питомца через админа
-    public static final String VOLUNTEER_APPLICATIONS_ADD_CONFIRM = "VOLUNTEER_APPLICATIONS_ADD_CONFIRM";
-    public static final String VOLUNTEER_APPLICATIONS_ADD_CANCEL = "VOLUNTEER_APPLICATIONS_ADD_CANCEL";
+    //public static final String VOLUNTEER_APPLICATIONS_ADD_CONFIRM = "VOLUNTEER_APPLICATIONS_ADD_CONFIRM";
+    //public static final String VOLUNTEER_APPLICATIONS_ADD_CANCEL = "VOLUNTEER_APPLICATIONS_ADD_CANCEL";
 
     public static final String RETURN_TO_MENU = "RETURN_TO_MENU";
     public static final String BACK = "BACK";
