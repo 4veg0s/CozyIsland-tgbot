@@ -2,11 +2,11 @@ package com.cozyisland.CozyIslandtgbot.service;
 
 import com.cozyisland.CozyIslandtgbot.config.BotConfig;
 import com.cozyisland.CozyIslandtgbot.model.*;
+import com.cozyisland.CozyIslandtgbot.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -78,6 +78,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             "- канцелярия (бумага для принтера, ручки, прозрачные файлы, бумага для записей, большие папки)\n" +
             "- пледы, одеяла, покрывала, скатерти, ковролин, ковры";
     @Autowired
+    private UserRepository userRepository;
+    @Autowired
     private PetRepository petRepository;
 
     // FIXME
@@ -106,7 +108,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     final BotConfig config;
     List<Long> superUsers;
     List<BotCommand> listOfCommands;
-    int menuMessageId;
     List<Pet> petList;
     int currentPetIndex;
     boolean petAddMode = false;
@@ -330,7 +331,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         keyboardMarkup.setKeyboard(rowsInline);
 
-        EditMessageText message = editMessage(chatId, menuMessageId, textToSend, keyboardMarkup);
+        EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, keyboardMarkup);
         executeMessage(message);
     }
 
@@ -356,7 +357,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         keyboardMarkup.setKeyboard(rowsInline);
 
-        EditMessageText message = editMessage(chatId, menuMessageId, textToSend, keyboardMarkup);
+        EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, keyboardMarkup);
 
         executeMessage(message);
     }
@@ -386,8 +387,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void inlinePets(Update update) {
-        setMenuMessageId(update.getCallbackQuery().getMessage().getMessageId());
-
         if (petAddMode)
             petAddMode = false;     // если ожидался новый питомец, но был выход из команды - отмена режима редактирования
 
@@ -487,7 +486,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void inlineFeedbackNew(Update update) {
-        setMenuMessageId(update.getCallbackQuery().getMessage().getMessageId());
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
         String textToSend = "Оставьте Ваш отзыв о нашем приюте";
@@ -496,7 +494,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void inlineReturnToMenu(Update update) {
-        setMenuMessageId(update.getCallbackQuery().getMessage().getMessageId());
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
         EditMessageText message = editMessage(chatId, messageId, "<b>Главное меню</b> нашего приюта", mainMenuInlineMarkup());
@@ -504,7 +501,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void inlineVolunteer(Update update) {
-        setMenuMessageId(update.getCallbackQuery().getMessage().getMessageId());
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
         String textToSend = "<b>Раздел волонтерства</b>\n" +
@@ -522,8 +518,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         DeleteMessage menuMessage = new DeleteMessage();
         menuMessage.setChatId(chatId);
-        menuMessage.setMessageId(menuMessageId);
-        executeMessage(menuMessage);
+        menuMessage.setMessageId(userRepository.findById(chatId).get().getMenuMessageId());
+        deleteMessage(menuMessage);
 
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -574,8 +570,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         DeleteMessage message = new DeleteMessage();
         message.setChatId(contact.getUserId());
-        message.setMessageId(this.menuMessageId);
-        executeMessage(message);
+        message.setMessageId(userRepository.findById(contact.getUserId()).get().getMenuMessageId());
+        deleteMessage(message);
 
         sendMessage(contact.getUserId(), "Переход в главное меню");
         menuCommandReceived(contact.getUserId());
@@ -594,7 +590,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void inlineFeedback(Update update) {
-        setMenuMessageId(update.getCallbackQuery().getMessage().getMessageId());
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
         String textToSend = "<b>Раздел отзывов</b> :speech_balloon:";
@@ -637,8 +632,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void inlineDonate(Update update) {
-        setMenuMessageId(update.getCallbackQuery().getMessage().getMessageId());
-
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
         String textToSend = "<b>Раздел пожертвований</b>\n" +
@@ -665,15 +658,16 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
 
-    private void setMenuMessageId(int messageId) {
-        if (this.menuMessageId != messageId) {
-            this.menuMessageId = messageId;
-        }
-    }
-
     private void startCommandReceived(Update update) {
         long chatId = update.getMessage().getChatId();
         String name = update.getMessage().getChat().getFirstName();
+
+        if (userRepository.findById(chatId).isEmpty()) {
+            User user = User.builder()
+                    .chatId(chatId)
+                    .build();
+            userRepository.save(user);
+        }
 
         String startResponse = String.format(START_TEXT, name);
 
@@ -685,9 +679,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void menuCommandReceived(long chatId) {
         DeleteMessage message = new DeleteMessage();
         message.setChatId(chatId);
-        message.setMessageId(this.menuMessageId);
-        executeMessage(message);
+        message.setMessageId(userRepository.findById(chatId).get().getMenuMessageId());
+        deleteMessage(message);
 
+        // TODO: реализовать изменение в базе айди сообщения с главным меню
         sendMessage(chatId, "<b>Главное меню</b> нашего приюта", mainMenuInlineMarkup());
     }
 
@@ -719,7 +714,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
 
-    private void executeMessage(DeleteMessage message) {
+    private void deleteMessage(DeleteMessage message) {
         try {
             execute(message);
             log.info("Message was successfully deleted");
@@ -728,23 +723,26 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void executeMessage(SendMessage message) {
+    private int executeMessage(SendMessage message) {
         try {
-            // TODO: реализовать возврат айди отправленного сообщения
-            execute(message);
+            Message response = execute(message);
             log.info("Message sent successfully to user with chatId = " + message.getChatId());
+            return response.getMessageId();
         } catch (TelegramApiException e) {
             log.error("Error occurred while attempting to send a message to user with chatId = " + message.getChatId() + ": " + e.getMessage());
         }
+        return -1;  // Произошла ошибка см. лог
     }
 
-    private void executeMessage(EditMessageText message) {
+    private int executeMessage(EditMessageText message) {
         try {
-            execute(message);
+            Message response = (Message) execute(message);
             log.info("Message sent successfully to user with chatId = " + message.getChatId());
+            return response.getMessageId();
         } catch (TelegramApiException e) {
             log.error("Error occurred while attempting to send a message to user with chatId = " + message.getChatId() + ": " + e.getMessage());
         }
+        return -1;
     }
 
     private EditMessageText editMessage(long chatId, int messageId, String textToSend) {
@@ -830,7 +828,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 menuCommandReceived(chatId);
             }
         } else if (messageText.equals("Главное меню")) {
-            if (menuMessageId != 0) {
+            if (userRepository.findById(chatId).get().getMenuMessageId() != 0) {
                 sendMessage(chatId, "Переход в главное меню", new ReplyKeyboardRemove(true, null));
             }
             menuCommandReceived(chatId);
@@ -848,7 +846,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 "\n\n<b>Проверьте заполнение полей</b>";
 
         EditMessageText message = editMessage(chatId,
-                menuMessageId,
+                userRepository.findById(chatId).get().getMenuMessageId(),
                 textToSend,
                 twoButtonInlineMarkup(
                         "Подтвердить",
