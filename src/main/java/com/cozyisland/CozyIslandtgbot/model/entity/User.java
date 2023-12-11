@@ -15,4 +15,5 @@ public class User {
     @Id
     private long chatId;
     private int menuMessageId;
+    private int currentListIndex;
 }

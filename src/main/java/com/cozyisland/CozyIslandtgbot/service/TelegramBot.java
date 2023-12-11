@@ -118,10 +118,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     List<Long> superUsers;
     List<BotCommand> listOfCommands;
     List<Pet> petList;
-    int currentPetIndex;
+    //int currentPetIndex;
     boolean petAddMode = false;
     List<VolunteerApplication> volunteerApplicationList;
-    int currentVolunteerApplicationIndex;
+    //int currentVolunteerApplicationIndex;
 
 
     public TelegramBot(BotConfig config) {
@@ -378,7 +378,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         Pet defaultPet = new Pet();
 
         long chatId = update.getCallbackQuery().getMessage().getChatId();
-        String textToSend = petTemplateInsert(defaultPet) +
+        String textToSend = petTemplateInsert(chatId, defaultPet) +
                 "\n\n(порядок аргументов:point_up_2:)\n" +
                 "Введите данные нового питомца аналогично примеру:\n" +
                 "Нажмите на текст ниже, чтобы скопировать\n\n" +
@@ -396,13 +396,14 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void deletePet(Update update) {
-        Pet currentPet = petList.get(currentPetIndex);
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        Pet currentPet = petList.get(userRepository.findById(chatId).get().getCurrentListIndex());
         if (petRepository.findById(currentPet.getId()).isEmpty()) {
             log.error("Couldn't find pet in petList");
         } else {
             petRepository.deleteById(currentPet.getId());
             log.info("Successfully deleted from petList: " + currentPet.toString());
-            if (currentPetIndex == 0) currentPetIndex++;
+            if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) incrementUserCurrentListIndex(chatId, 1);
         }
 
         petList = reloadPetList();
@@ -410,23 +411,34 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void previousPet(Update update) {
-        currentPetIndex = (currentPetIndex == 0) ? petList.size() - 1 : --currentPetIndex;
-        showPet(petList, currentPetIndex, update);
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) {
+            setUserCurrentListIndex(chatId, petList.size() - 1);
+        } else {
+            incrementUserCurrentListIndex(chatId, -1);
+        }
+        showPet(chatId, petList, userRepository.findById(chatId).get().getCurrentListIndex());
     }
 
     private void nextPet(Update update) {
-        currentPetIndex = (currentPetIndex == petList.size() - 1) ? 0 : ++currentPetIndex;
-        showPet(petList, currentPetIndex, update);
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        if (userRepository.findById(chatId).get().getCurrentListIndex() == petList.size() - 1) {
+            setUserCurrentListIndex(chatId, 0);
+        } else {
+            incrementUserCurrentListIndex(chatId, 1);
+        }
+        showPet(chatId, petList, userRepository.findById(chatId).get().getCurrentListIndex());
     }
 
     private void inlinePets(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
         if (petAddMode)
             petAddMode = false;     // если ожидался новый питомец, но был выход из команды - отмена режима редактирования
 
         petList = reloadPetList();
-        currentPetIndex = 0;
+        setUserCurrentListIndex(chatId, 0);
 
-        showPet(petList, currentPetIndex, update);
+        showPet(chatId, petList, userRepository.findById(chatId).get().getCurrentListIndex());
     }
 
     private List<Pet> reloadPetList() {
@@ -436,29 +448,27 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
 
-    private void showPet(List<Pet> petList, int currentPetIndex, Update update) {
-        long chatId = update.getCallbackQuery().getMessage().getChatId();
-        int messageId = update.getCallbackQuery().getMessage().getMessageId();
-        if (petList.size() == 0) {
+    private void showPet(long chatId, List<Pet> petList, int currentPetIndex) {
+        if (petList.isEmpty()) {
             String textToSend = "На данный момент в приюте нет ни одного питомца";
-            EditMessageText message = editMessage(chatId, messageId, textToSend, petsMenuInlineMarkup(chatId));
+            EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, petsMenuInlineMarkup(chatId));
             executeMessage(message);
         } else {
             Pet currentPet = petList.get(currentPetIndex);
-            String petInfo = petTemplateInsert(currentPet);
-            EditMessageText message = editMessage(chatId, messageId, petInfo, petsMenuInlineMarkup(chatId));
+            String petInfo = petTemplateInsert(chatId, currentPet);
+            EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), petInfo, petsMenuInlineMarkup(chatId));
             executeMessage(message);
         }
     }
 
-    private String petTemplateInsert(Pet currentPet) {
-        return String.format(PET_DATA_TEMPLATE, currentPetIndex + 1,
+    private String petTemplateInsert(long chatId, Pet currentPet) {
+        return String.format(PET_DATA_TEMPLATE, userRepository.findById(chatId).get().getCurrentListIndex() + 1,
                 currentPet.getCategory(),
                 currentPet.getName(),
                 currentPet.getAge(),
                 ((currentPet.isSterilized()) ? "да" : "нет"),
                 currentPet.getAbout(),
-                currentPetIndex + 1,
+                userRepository.findById(chatId).get().getCurrentListIndex() + 1,
                 petList.size()
         );
     }
@@ -488,10 +498,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void inlineVolunteerApplications(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
         volunteerApplicationList = reloadVolunteerApplicationList();
-        currentVolunteerApplicationIndex = 0;
+        setUserCurrentListIndex(chatId, 0);
 
-        showVolunteerApplication(update.getCallbackQuery().getMessage().getChatId(), volunteerApplicationList, currentVolunteerApplicationIndex);
+        showVolunteerApplication(chatId, volunteerApplicationList, userRepository.findById(chatId).get().getCurrentListIndex());
     }
 
     private InlineKeyboardMarkup volunteerApplicationsMenuInlineMarkup(long chatId) {
@@ -541,13 +552,14 @@ public class TelegramBot extends TelegramLongPollingBot {
     }*/
 
     private void deleteVolunteerApplication(Update update) {
-        VolunteerApplication currentApplication = volunteerApplicationList.get(currentVolunteerApplicationIndex);
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        VolunteerApplication currentApplication = volunteerApplicationList.get(userRepository.findById(chatId).get().getCurrentListIndex());
         if (volunteerApplicationRepository.findById(currentApplication.getChatId()).isEmpty()) {
             log.error("Couldn't find application in volunteerApplicationList");
         } else {
             volunteerApplicationRepository.deleteById(currentApplication.getChatId());
             log.info("Successfully deleted from volunteerApplicationList: " + currentApplication);
-            if (currentVolunteerApplicationIndex == 0) currentVolunteerApplicationIndex++;
+            if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) incrementUserCurrentListIndex(chatId, 1);
         }
 
         volunteerApplicationList = reloadVolunteerApplicationList();
@@ -555,13 +567,23 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void previousVolunteerApplication(Update update) {
-        currentVolunteerApplicationIndex = (currentVolunteerApplicationIndex == 0) ? volunteerApplicationList.size() - 1 : --currentVolunteerApplicationIndex;
-        showVolunteerApplication(update.getCallbackQuery().getMessage().getChatId(), volunteerApplicationList, currentVolunteerApplicationIndex);
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) {
+            setUserCurrentListIndex(chatId, volunteerApplicationList.size() - 1);
+        } else {
+            incrementUserCurrentListIndex(chatId, -1);
+        }
+        showVolunteerApplication(chatId, volunteerApplicationList, userRepository.findById(chatId).get().getCurrentListIndex());
     }
 
     private void nextVolunteerApplication(Update update) {
-        currentVolunteerApplicationIndex = (currentVolunteerApplicationIndex == volunteerApplicationList.size() - 1) ? 0 : ++currentVolunteerApplicationIndex;
-        showVolunteerApplication(update.getCallbackQuery().getMessage().getChatId(), volunteerApplicationList, currentVolunteerApplicationIndex);
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        if (userRepository.findById(chatId).get().getCurrentListIndex() == volunteerApplicationList.size() - 1) {
+            setUserCurrentListIndex(chatId, 0);
+        } else {
+            incrementUserCurrentListIndex(chatId, 1);
+        }
+        showVolunteerApplication(chatId, volunteerApplicationList, userRepository.findById(chatId).get().getCurrentListIndex());
     }
 
     private List<VolunteerApplication> reloadVolunteerApplicationList() {
@@ -571,28 +593,27 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void showVolunteerApplication(long chatId, List<VolunteerApplication> volunteerApplicationList, int currentVolunteerApplicationIndex) {
-        if (volunteerApplicationList.size() == 0) {
+        if (volunteerApplicationList.isEmpty()) {
             String textToSend = "На данный момент нет ни одной заявки на волонтерство";
             EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, volunteerApplicationsMenuInlineMarkup(chatId));
             executeMessage(message);
         } else {
             VolunteerApplication currentApplication = volunteerApplicationList.get(currentVolunteerApplicationIndex);
-            String volunteerApplicationInfo = volunteerApplicationTemplateInsert(currentApplication);
+            String volunteerApplicationInfo = volunteerApplicationTemplateInsert(chatId, currentApplication);
             EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), volunteerApplicationInfo, volunteerApplicationsMenuInlineMarkup(chatId));
             executeMessage(message);
         }
     }
 
-    private String volunteerApplicationTemplateInsert(VolunteerApplication currentApplication) {
+    private String volunteerApplicationTemplateInsert(long chatId, VolunteerApplication currentApplication) {
         return String.format(VOLUNTEER_APPLICATION_TEMPLATE,
                 currentApplication.getChatId(),
                 currentApplication.getFirstname(),
                 currentApplication.getPhoneNumber(),
                 currentApplication.getUserName(),
-                // TODO: срезать последние 7 символов у таймстемпа
-                currentApplication.getAppliedAt(),
+                currentApplication.getAppliedAt().toString().substring(0, currentApplication.getAppliedAt().toString().length() - 7),
                 currentApplication.getStatus(),
-                currentVolunteerApplicationIndex + 1,
+                userRepository.findById(chatId).get().getCurrentListIndex() + 1,
                 volunteerApplicationList.size()
         );
     }
@@ -616,7 +637,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void inlineVolunteerSendContact(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
-        // TODO: текст для волонтера
         String textToSend = "Чтобы отправить свой контакт, нажмите на кнопку внизу:point_down:";
 
         DeleteMessage menuMessage = new DeleteMessage();
@@ -740,10 +760,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             volunteerApplicationRepository.save(application);
 
-            // TODO: убрать текущий индекс списка из полей класса в базу
             volunteerApplicationList = reloadVolunteerApplicationList();
-            currentVolunteerApplicationIndex = volunteerApplicationList.size() - 1;
+            setUserCurrentListIndex(chatId, volunteerApplicationList.size() - 1);
             adminNotification("VOLUNTEER");
+            log.info("Volunteer's application saved to repository: " + application);
 
             textToSend = "Ваш контакт (" + contact.getPhoneNumber() + ") передан менеджеру\n" +
                     "В ближайший рабочий день мы обработаем Вашу заявку и перезвоним Вам\n" +
@@ -763,6 +783,27 @@ public class TelegramBot extends TelegramLongPollingBot {
         menuCommandReceived(contact.getUserId());
     }
 
+    private void setUserCurrentListIndex(long chatId, int index) {
+        if (userRepository.findById(chatId).isPresent()) {
+            User user = userRepository.findById(chatId).get();
+            user.setCurrentListIndex(index);
+            userRepository.save(user);
+        } else {
+            log.error("Couldn't find user with chatId = " + chatId + " in db");
+        }
+    }
+
+    private void incrementUserCurrentListIndex(long chatId, int inc) {
+        if (userRepository.findById(chatId).isPresent()) {
+            User user = userRepository.findById(chatId).get();
+            int currentIndex = user.getCurrentListIndex();
+            user.setCurrentListIndex(currentIndex + inc);
+            userRepository.save(user);
+        } else {
+            log.error("Couldn't find user with chatId = " + chatId + " in db");
+        }
+    }
+
     private void adminNotification(String mode) {
         switch (mode) {
             case "VOLUNTEER" -> {
@@ -770,7 +811,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                 for (long adminId : superUsers) {
                     sendMessage(adminId, firstText);
                     menuCommandReceived(adminId);
+                    setUserCurrentListIndex(adminId, volunteerApplicationList.size() - 1);
                     showVolunteerApplication(adminId, volunteerApplicationList, volunteerApplicationList.size() - 1);
+                    log.info("Notified admin with chatId = " + adminId + " about new volunteer application");
                 }
             }
             case "PET" -> {
@@ -877,7 +920,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         message.setMessageId(currentUser.getMenuMessageId());
         deleteMessage(message);
 
-        // TODO: реализовать изменение в базе айди сообщения с главным меню
         currentUser.setMenuMessageId(sendMessage(chatId, "<b>Главное меню</b> нашего приюта", mainMenuInlineMarkup()));
         userRepository.save(currentUser);
     }
@@ -1038,7 +1080,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void initAddPet(long chatId, String messageText) {
         Pet transientNewPet = parsePet(messageText);
 
-        String textToSend = messageText + "\n" + petTemplateInsert(transientNewPet) +
+        String textToSend = messageText + "\n" + petTemplateInsert(chatId, transientNewPet) +
                 "\n\n<b>Проверьте заполнение полей</b>";
 
         EditMessageText message = editMessage(chatId,
@@ -1055,7 +1097,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private Pet parsePet(String messageText) {
-        String petObject[] = messageText.split("/pet ")[1].split("; ");
+        String[] petObject = messageText.split("/pet ")[1].split("; ");
         Pet transientNewPet = new Pet();
 
         //              0               1                 2                          3               4
