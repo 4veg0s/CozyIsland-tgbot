@@ -23,4 +23,5 @@ public class PetClaimApplication {
     @CreationTimestamp
     private Timestamp appliedAt;
     private String status = "на рассмотрении";
+    private Timestamp visitDate;
 }
