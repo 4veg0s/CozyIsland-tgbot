@@ -10,14 +10,24 @@ public class CallbackConstants {
     public static final String PETS = "PETS";
     public static final String FEEDBACK = "FEEDBACK";
     public static final String VOLUNTEER = "VOLUNTEER";
+    public static final String APPLICATIONS = "APPLICATIONS";
 
     // РАЗДЕЛ "ПИТОМЦЫ"
     public static final String PETS_PREVIOUS = "PETS_PREVIOUS";
     public static final String PETS_NEXT = "PETS_NEXT";
-    public static final String PETS_CLAIM = "PETS_CLAIM"; // хочу забрать
     public static final String PETS_ADD = "PETS_ADD";
     public static final String PETS_EDIT = "PETS_EDIT";
     public static final String PETS_DELETE = "PETS_DELETE";
+    public static final String PETS_CLAIM = "PETS_CLAIM"; // хочу забрать
+    // РАЗДЕЛ ЗАЯВОК НА ПИТОМЦЕВ
+    public static final String PETS_CLAIM_APPLICATIONS = "PETS_CLAIM_APPLICATIONS";
+    public static final String PETS_CLAIM_PREVIOUS = "PETS_CLAIM_PREVIOUS";
+    public static final String PETS_CLAIM_NEXT = "PETS_CLAIM_NEXT";
+    //TODO: реализовать кнопку "одобрить" для заявки на питомца
+    public static final String PETS_CLAIM_APPROVE = "PETS_CLAIM_APPROVE"; // одобрить
+    public static final String PETS_CLAIM_ADD = "PETS_CLAIM_ADD";
+    public static final String PETS_CLAIM_EDIT = "PETS_CLAIM_EDIT";
+    public static final String PETS_CLAIM_DELETE = "PETS_CLAIM_DELETE";
 
     // подтверждение или отмена добавления нового питомца через админа
     public static final String PETS_ADD_CONFIRM = "PETS_ADD_CONFIRM";
@@ -47,6 +57,7 @@ public class CallbackConstants {
     public static final String VOLUNTEER_SEND_CONTACT = "VOLUNTEER_SEND_CONTACT";
     public static final String VOLUNTEER_APPLICATIONS_PREVIOUS = "VOLUNTEER_APPLICATIONS_PREVIOUS";
     public static final String VOLUNTEER_APPLICATIONS_NEXT = "VOLUNTEER_APPLICATIONS_NEXT";
+    //TODO: реализовать кнопку "одобрить" для заявки на волонтерство
     public static final String VOLUNTEER_APPLICATIONS_APPROVE = "VOLUNTEER_APPLICATIONS_APPROVE"; // одобрить
     public static final String VOLUNTEER_APPLICATIONS_ADD = "VOLUNTEER_APPLICATIONS_ADD";
     public static final String VOLUNTEER_APPLICATIONS_EDIT = "VOLUNTEER_APPLICATIONS_EDIT";
