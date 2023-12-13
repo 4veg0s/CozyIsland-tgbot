@@ -11,5 +11,5 @@ public enum InlineMarkupType {
     PETS_MENU,
     RETURN_TO_MENU,
     VOLUNTEER_APPLICATION_MENU,
-    VOLUNTEER_MENU
+    PROCEED_MENU
 }

@@ -19,6 +19,8 @@ public class CallbackConstants {
     public static final String PETS_EDIT = "PETS_EDIT";
     public static final String PETS_DELETE = "PETS_DELETE";
     public static final String PETS_CLAIM = "PETS_CLAIM"; // хочу забрать
+    public static final String PROCEED = "PROCEED"; // кнопка продолжить (ведет к запросу контакта)
+
     // РАЗДЕЛ ЗАЯВОК НА ПИТОМЦЕВ
     public static final String PETS_CLAIM_APPLICATIONS = "PETS_CLAIM_APPLICATIONS";
     public static final String PETS_CLAIM_PREVIOUS = "PETS_CLAIM_PREVIOUS";
@@ -53,7 +55,6 @@ public class CallbackConstants {
 
     // РАЗДЕЛ "ВОЛОНТЕРСТВО"
     public static final String VOLUNTEER_APPLICATIONS = "VOLUNTEER_APPLICATIONS";
-    public static final String VOLUNTEER_SEND_CONTACT = "VOLUNTEER_SEND_CONTACT";
     public static final String VOLUNTEER_APPLICATIONS_PREVIOUS = "VOLUNTEER_APPLICATIONS_PREVIOUS";
     public static final String VOLUNTEER_APPLICATIONS_NEXT = "VOLUNTEER_APPLICATIONS_NEXT";
     public static final String VOLUNTEER_APPLICATIONS_APPROVE = "VOLUNTEER_APPLICATIONS_APPROVE"; // одобрить

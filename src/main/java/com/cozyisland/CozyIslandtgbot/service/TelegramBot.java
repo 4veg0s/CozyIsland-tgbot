@@ -291,9 +291,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                     case CallbackConstants.VOLUNTEER_APPLICATIONS -> {
                         inlineVolunteerApplications(update);
                     }
-                    case CallbackConstants.VOLUNTEER_SEND_CONTACT -> {
-                        sendContactRequest(update);
-                    }
                     case CallbackConstants.VOLUNTEER_APPLICATIONS_PREVIOUS -> {
                         previousItem(update, ItemType.VOLUNTEER_APPLICATION);
                     }
@@ -336,6 +333,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
             switch (callbackData) {
+                case CallbackConstants.PROCEED -> {
+                    inlineProceed(update);
+                }
                 case CallbackConstants.RETURN_TO_MENU -> {
                     inlineReturnToMenu(update);
                 }
@@ -344,6 +344,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
         }
+    }
+
+    private void inlineProceed(Update update) {
+        sendContactRequest(update);
     }
 
 
@@ -654,12 +658,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         return String.format(VOLUNTEER_APPLICATION_TEMPLATE,
                 currentApplication.getChatId(),
                 user.getFirstName(),
-                user.getPhoneNumber(),
-                user.getUserName(),
+                (user.getPhoneNumber() == null) ? "не указан" : user.getPhoneNumber(),
+                (user.getUserName() == null) ? "не указано" : user.getUserName(),
                 currentApplication.getAppliedAt().toString().substring(0, currentApplication.getAppliedAt().toString().length() - 7),
                 currentApplication.getStatus(),
                 (currentApplication.getVisitDate() == null) ? "не назначена" : currentApplication.getVisitDate().toString().substring(0, 10),
-                user.getCurrentListIndex() + 1,
+                userRepository.findById(chatId).get().getCurrentListIndex() + 1,
                 volunteerApplicationList.size()
         );
     }
@@ -676,12 +680,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                 currentApplication.getPk().getChatId(),
                 user.getFirstName(),
                 (user.getPhoneNumber() == null) ? "не указан" : user.getPhoneNumber(),
-                user.getUserName(),
+                (user.getUserName() == null) ? "не указано" : user.getUserName(),
                 currentApplication.getAppliedAt().toString().substring(0, currentApplication.getAppliedAt().toString().length() - 7),
 
                 currentApplication.getStatus(),
                 (currentApplication.getVisitDate() == null) ? "не назначена" : currentApplication.getVisitDate().toString().substring(0, 10),
-                user.getCurrentListIndex() + 1,
+                userRepository.findById(chatId).get().getCurrentListIndex() + 1,
                 petClaimApplicationList.size()
         );
     }
@@ -690,12 +694,27 @@ public class TelegramBot extends TelegramLongPollingBot {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         User user = null;
         if (userRepository.findById(chatId).isPresent()) {
-            user = userRepository.findById(chatId).get();
+            user = getUserFromRepo(chatId);
         } else {
             user = registerUser(update);
         }
         setUserState(chatId, UserState.PET_CLAIM_STATE);
-        registerPetClaimApplication(update);
+
+        if (user.getPhoneNumber() == null) {
+            contactRequestWarning(update);
+        } else {
+            registerPetClaimApplication(update);
+        }
+    }
+
+    private void contactRequestWarning(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+        String textToSend = "Чтобы продолжить, отправьте нам свой контакт";
+
+        EditMessageText message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.PROCEED_MENU));
+
+        executeMessage(message);
     }
 
     private void inlinePetClaimApplications(Update update) {
@@ -703,7 +722,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         petClaimApplicationList = reloadPetClaimApplicationList();
         setUserCurrentListIndex(chatId, 0);
 
-        showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.PET_CLAIM_APPLICATION);
+        showItem(chatId, 0, ItemType.PET_CLAIM_APPLICATION);
     }
 
     private List<PetClaimApplication> reloadPetClaimApplicationList() {
@@ -737,9 +756,17 @@ public class TelegramBot extends TelegramLongPollingBot {
     }*/
 
     private void registerPetClaimApplication(Update update) {
-        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        long chatId;
+        if (update.hasCallbackQuery()) {
+            chatId = update.getCallbackQuery().getMessage().getChatId();
+        } else {
+            chatId = update.getMessage().getChatId();
+        }
 
-        Pet chosenPet = petList.get(userRepository.findById(chatId).get().getCurrentListIndex());
+
+        petList = reloadPetList();
+        User user = userRepository.findById(chatId).get();
+        Pet chosenPet = petList.get(user.getCurrentListIndex());
         PetClaimApplicationPK petClaimApplicationPK = new PetClaimApplicationPK(chosenPet.getId(), chatId);
         String textToSend;
 
@@ -765,14 +792,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                     "<i>Просмотреть свои заявки и взаимодействовать с ними Вы можете в разделе \"Заявки\" главного меню</i>";
         }
 
-        int deleteMarkupMessageId = sendMessage(chatId, "Загрузка...", new ReplyKeyboardRemove(true, null));
+        if (update.hasCallbackQuery()) {
+            EditMessageText message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.RETURN_TO_MENU));
+            executeMessage(message);
+        } else {
+            setUserMenuMessageId(chatId, sendMessage(chatId, textToSend, customInlineMarkup(chatId, InlineMarkupType.RETURN_TO_MENU)));
+        }
 
-        DeleteMessage message = new DeleteMessage();
-        message.setChatId(chatId);
-        message.setMessageId(deleteMarkupMessageId);
-        deleteMessage(message);
-
-        sendMessage(chatId, textToSend, customInlineMarkup(chatId, InlineMarkupType.RETURN_TO_MENU));
     }
 
     private void approvePetClaimApplication(Update update) {
@@ -838,7 +864,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         volunteerApplicationList = reloadVolunteerApplicationList();
         setUserCurrentListIndex(chatId, 0);
 
-        showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.VOLUNTEER_APPLICATION);
+        showItem(chatId, 0, ItemType.VOLUNTEER_APPLICATION);
     }
 
     private InlineKeyboardMarkup customInlineMarkup(long chatId, InlineMarkupType type) {
@@ -897,7 +923,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 if (superUsers.contains(chatId)) {
                     //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Добавить", CallbackConstants.PETS_CLAIM_ADD))));
-                    if (petClaimApplicationList.size() > 1) {
+                    if (petClaimApplicationList.size() > 0) {
                         //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Редактировать", CallbackConstants.PETS_CLAIM_EDIT))));
                         rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Удалить", CallbackConstants.PETS_CLAIM_DELETE))));
                     }
@@ -957,8 +983,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 keyboardMarkup.setKeyboard(rowsInline);
             }
-            case VOLUNTEER_MENU -> {
-                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Продолжить", CallbackConstants.VOLUNTEER_SEND_CONTACT))));
+            case PROCEED_MENU -> {
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Продолжить", CallbackConstants.PROCEED))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
@@ -972,6 +998,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             case RETURN_TO_MENU -> {
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+                keyboardMarkup.setKeyboard(rowsInline);
             }
         }
         return keyboardMarkup;
@@ -1097,57 +1125,59 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void inlineReturnToMenu(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
+        User user = getUserFromRepo(chatId);
+        user.setState(UserState.BASIC_STATE);
         EditMessageText message = editMessage(chatId, messageId, "<b>Главное меню</b> нашего приюта", customInlineMarkup(chatId, InlineMarkupType.MAIN_MENU));
-        executeMessage(message);
+        user.setMenuMessageId(executeMessage(message));
+        userRepository.save(user);
     }
 
     private void inlineVolunteer(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
+        setUserState(chatId, UserState.VOLUNTEER_STATE);
         String textToSend = "<b>Раздел волонтерства</b>\n" +
                 "Чтобы оставить заявку на волонтерскую помощь нашему приюту, отправьте нам свой контакт, и мы свяжемся с Вами";
 
-        EditMessageText message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_MENU));
+        EditMessageText message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.PROCEED_MENU));
 
         executeMessage(message);
     }
 
-    private void contactReceived(Update update) {
-        long chatId = update.getMessage().getChatId();
-        User user = userRepository.findById(chatId).get();
-        // TODO: обработать контакт
-        if (user.getState() == UserState.VOLUNTEER_STATE) {
-            registerVolunteerApplication(update);
-        }
+    private User getUserFromRepo(long chatId) {
+        return (userRepository.findById(chatId).isPresent()) ? userRepository.findById(chatId).get() : null;
     }
 
+    private void contactReceived(Update update) {
+        registerContact(update);
+    }
+
+    // TODO: зарегистрировать контакт
     private void registerContact(Update update) {
         Contact contact = update.getMessage().getContact();
         long chatId = contact.getUserId();
         User user = userRepository.findById(chatId).get();
 
-        String textToSend;
-        if (user.getPhoneNumber().isEmpty()) {
+        if (user.getPhoneNumber() == null) {
             user.setPhoneNumber(contact.getPhoneNumber());
 
             userRepository.save(user);
 
             log.info("Saved user's phone number: " + user);
-
-            textToSend = "Ваш контакт (" + contact.getPhoneNumber() + ") сохранен";
-        } else {
-            textToSend = "Ваша предыдущая заявка на волонтерство уже находится в обработке\n" +
-                    "Ожидайте, пожалуйста";
         }
-        sendMessage(contact.getUserId(), textToSend, new ReplyKeyboardRemove(true, null));
+
+        int deleteMarkupMessageId = sendMessage(chatId, "Загрузка...", new ReplyKeyboardRemove(true, null));
 
         DeleteMessage message = new DeleteMessage();
-        message.setChatId(contact.getUserId());
-        message.setMessageId(userRepository.findById(contact.getUserId()).get().getMenuMessageId());
+        message.setChatId(chatId);
+        message.setMessageId(deleteMarkupMessageId);
         deleteMessage(message);
 
-        sendMessage(contact.getUserId(), "Переход в главное меню");
-        menuCommandReceived(contact.getUserId());
+        if (user.getState() == UserState.VOLUNTEER_STATE) {
+            registerVolunteerApplication(update);
+        } else if (user.getState() == UserState.PET_CLAIM_STATE) {
+            registerPetClaimApplication(update);
+        }
     }
 
 
@@ -1176,13 +1206,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             textToSend = "Ваша предыдущая заявка на волонтерство уже находится в обработке\n\n" +
                     "<i>Просмотреть свои заявки и взаимодействовать с ними Вы можете в разделе \"Заявки\" главного меню</i>";
         }
-        int deleteMarkupMessageId = sendMessage(chatId, "Загрузка...", new ReplyKeyboardRemove(true, null));
-
-        DeleteMessage message = new DeleteMessage();
-        message.setChatId(chatId);
-        message.setMessageId(deleteMarkupMessageId);
-        deleteMessage(message);
-
         sendMessage(chatId, textToSend, customInlineMarkup(chatId, InlineMarkupType.RETURN_TO_MENU));
     }
 
@@ -1340,6 +1363,17 @@ public class TelegramBot extends TelegramLongPollingBot {
             log.error("Couldn't find user with chatId = " + chatId + " in userRepository");
         }
         user.setState(state);
+        userRepository.save(user);
+    }
+
+    private void setUserMenuMessageId(long chatId, int messageId) {
+        User user = null;
+        if (userRepository.findById(chatId).isPresent()) {
+            user = userRepository.findById(chatId).get();
+        } else {
+            log.error("Couldn't find user with chatId = " + chatId + " in userRepository");
+        }
+        user.setMenuMessageId(messageId);
         userRepository.save(user);
     }
 
