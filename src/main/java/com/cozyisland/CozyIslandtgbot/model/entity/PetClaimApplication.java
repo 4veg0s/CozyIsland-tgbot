@@ -17,9 +17,6 @@ import java.sql.Timestamp;
 public class PetClaimApplication {
     @EmbeddedId
     private PetClaimApplicationPK pk;
-    private String firstname;
-    private String userName = "не указано";
-    private String phoneNumber = "не указан";
     @CreationTimestamp
     private Timestamp appliedAt;
     private String status = "на рассмотрении";

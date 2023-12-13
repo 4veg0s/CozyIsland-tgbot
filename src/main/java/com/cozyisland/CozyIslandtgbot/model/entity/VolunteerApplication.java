@@ -17,9 +17,6 @@ import java.sql.Timestamp;
 public class VolunteerApplication {
     @Id
     private long chatId;
-    private String firstname;
-    private String userName = "не указано";
-    private String phoneNumber;
     @CreationTimestamp
     private Timestamp appliedAt;
     private String status = "на рассмотрении";
