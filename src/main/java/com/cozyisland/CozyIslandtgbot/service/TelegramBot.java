@@ -1,6 +1,8 @@
 package com.cozyisland.CozyIslandtgbot.service;
 
 import com.cozyisland.CozyIslandtgbot.config.BotConfig;
+import com.cozyisland.CozyIslandtgbot.enums.CallbackConstants;
+import com.cozyisland.CozyIslandtgbot.enums.ItemType;
 import com.cozyisland.CozyIslandtgbot.model.entity.*;
 import com.cozyisland.CozyIslandtgbot.model.entity.User;
 import com.cozyisland.CozyIslandtgbot.model.repository.*;
@@ -96,7 +98,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             "Добро пожаловать на \n" +
             ":feet:<b>Островок тепла</b>:feet:!");
 
-    // TODO: добавить стикеры из emojipedia
     static final String HELP_TEXT = EmojiParser.parseToUnicode("Мы предоставляем профессиональную ветеринарную помощь животным. " +
             "Осуществляем профилактику заболеваний, проводим регулярные осмотры и лечение животных" +
             ", которые нуждаются в медицинской помощи." +
@@ -109,7 +110,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             "<b>Стерилизован(а):</b> %s%n" +
             "<b>Характер:</b> %s%n%n" +
             "<i>%d/%d</i>";
-    //"Возраст: %s%n";
     static final String VOLUNTEER_APPLICATION_TEMPLATE = "<b>Заявка на волонтерство</b>%n%n" +
             "<b>ID пользователя:</b> %d%n" +
             "<b>Имя:</b> %s%n" +
@@ -454,7 +454,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         Pet defaultPet = new Pet();
 
         long chatId = update.getCallbackQuery().getMessage().getChatId();
-        String textToSend = petTemplateInsert(chatId, defaultPet) +
+        String textToSend = itemTemplateInsert(chatId, defaultPet) +
                 "\n\n(порядок аргументов:point_up_2:)\n" +
                 "Введите данные нового питомца аналогично примеру:\n" +
                 "Нажмите на текст ниже, чтобы скопировать\n\n" +
@@ -479,7 +479,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else {
             petRepository.deleteById(currentPet.getId());
             log.info("Successfully deleted from petList: " + currentPet.toString());
-            if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) incrementUserCurrentListIndex(chatId, 1);
+            if (userRepository.findById(chatId).get().getCurrentListIndex() == 0)
+                incrementUserCurrentListIndex(chatId, 1);
         }
 
         petList = reloadPetList();
@@ -493,7 +494,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else {
             incrementUserCurrentListIndex(chatId, -1);
         }
-        showPet(chatId, petList, userRepository.findById(chatId).get().getCurrentListIndex());
+        showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.PET);
     }
 
     private void nextPet(Update update) {
@@ -503,7 +504,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else {
             incrementUserCurrentListIndex(chatId, 1);
         }
-        showPet(chatId, petList, userRepository.findById(chatId).get().getCurrentListIndex());
+        showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.PET);
     }
 
     private void inlinePets(Update update) {
@@ -514,7 +515,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         petList = reloadPetList();
         setUserCurrentListIndex(chatId, 0);
 
-        showPet(chatId, petList, userRepository.findById(chatId).get().getCurrentListIndex());
+        showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.PET);
     }
 
     private List<Pet> reloadPetList() {
@@ -523,21 +524,48 @@ public class TelegramBot extends TelegramLongPollingBot {
                 .collect(Collectors.toList()));
     }
 
-
-    private void showPet(long chatId, List<Pet> petList, int currentPetIndex) {
-        if (petList.isEmpty()) {
-            String textToSend = "На данный момент в приюте нет ни одного питомца";
-            EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, petsMenuInlineMarkup(chatId));
-            executeMessage(message);
-        } else {
-            Pet currentPet = petList.get(currentPetIndex);
-            String petInfo = petTemplateInsert(chatId, currentPet);
-            EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), petInfo, petsMenuInlineMarkup(chatId));
-            executeMessage(message);
+    private void showItem(long chatId, int currentIndex, ItemType itemType) {
+        switch (itemType) {
+            case PET -> {
+                if (this.petList.isEmpty()) {
+                    String textToSend = "На данный момент в приюте нет ни одного питомца";
+                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, petsMenuInlineMarkup(chatId));
+                    executeMessage(message);
+                } else {
+                    Pet currentPet = this.petList.get(currentIndex);
+                    String petInfo = itemTemplateInsert(chatId, currentPet);
+                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), petInfo, petsMenuInlineMarkup(chatId));
+                    executeMessage(message);
+                }
+            }
+            case VOLUNTEER_APPLICATION -> {
+                if (this.volunteerApplicationList.isEmpty()) {
+                    String textToSend = "На данный момент нет ни одной заявки на волонтерство";
+                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, volunteerApplicationMenuInlineMarkup(chatId));
+                    executeMessage(message);
+                } else {
+                    VolunteerApplication currentApplication = this.volunteerApplicationList.get(currentIndex);
+                    String volunteerApplicationInfo = itemTemplateInsert(chatId, currentApplication);
+                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), volunteerApplicationInfo, volunteerApplicationMenuInlineMarkup(chatId));
+                    executeMessage(message);
+                }
+            }
+            case PET_CLAIM_APPLICATION -> {
+                if (this.petClaimApplicationList.isEmpty()) {
+                    String textToSend = "На данный момент нет ни одной заявки на питомца";
+                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, petClaimApplicationMenuInlineMarkup(chatId));
+                    executeMessage(message);
+                } else {
+                    PetClaimApplication currentApplication = this.petClaimApplicationList.get(currentIndex);
+                    String petClaimApplicationInfo = itemTemplateInsert(chatId, currentApplication);
+                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), petClaimApplicationInfo, petClaimApplicationMenuInlineMarkup(chatId));
+                    executeMessage(message);
+                }
+            }
         }
     }
 
-    private String petTemplateInsert(long chatId, Pet currentPet) {
+    private String itemTemplateInsert(long chatId, Pet currentPet) {
         return String.format(PET_DATA_TEMPLATE, userRepository.findById(chatId).get().getCurrentListIndex() + 1,
                 currentPet.getCategory(),
                 currentPet.getName(),
@@ -546,6 +574,41 @@ public class TelegramBot extends TelegramLongPollingBot {
                 currentPet.getAbout(),
                 userRepository.findById(chatId).get().getCurrentListIndex() + 1,
                 petList.size()
+        );
+    }
+
+    private String itemTemplateInsert(long chatId, VolunteerApplication currentApplication) {
+        return String.format(VOLUNTEER_APPLICATION_TEMPLATE,
+                currentApplication.getChatId(),
+                currentApplication.getFirstname(),
+                currentApplication.getPhoneNumber(),
+                currentApplication.getUserName(),
+                currentApplication.getAppliedAt().toString().substring(0, currentApplication.getAppliedAt().toString().length() - 7),
+                currentApplication.getStatus(),
+                (currentApplication.getVisitDate() == null) ? "не назначена" : currentApplication.getVisitDate().toString().substring(0, 10),
+                userRepository.findById(chatId).get().getCurrentListIndex() + 1,
+                volunteerApplicationList.size()
+        );
+    }
+
+    private String itemTemplateInsert(long chatId, PetClaimApplication currentApplication) {
+        Pet pet = petRepository.findById(currentApplication.getPk().getId()).get();
+        return String.format(PET_CLAIM_APPLICATION_TEMPLATE,
+                pet.getCategory(),
+                pet.getName(),
+                pet.getAge(),
+                ((pet.isSterilized()) ? "да" : "нет"),
+
+                currentApplication.getPk().getChatId(),
+                currentApplication.getFirstname(),
+                (currentApplication.getPhoneNumber() == null) ? "не указан" : currentApplication.getPhoneNumber(),
+                currentApplication.getUserName(),
+                currentApplication.getAppliedAt().toString().substring(0, currentApplication.getAppliedAt().toString().length() - 7),
+
+                currentApplication.getStatus(),
+                (currentApplication.getVisitDate() == null) ? "не назначена" : currentApplication.getVisitDate().toString().substring(0, 10),
+                userRepository.findById(chatId).get().getCurrentListIndex() + 1,
+                petClaimApplicationList.size()
         );
     }
 
@@ -592,9 +655,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> row = new ArrayList<>();
         if (!petClaimApplicationList.isEmpty()) {
-            if (petClaimApplicationList.size() > 1) row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.PETS_CLAIM_PREVIOUS));
+            if (petClaimApplicationList.size() > 1)
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.PETS_CLAIM_PREVIOUS));
             row.add(createInlineButton(EmojiParser.parseToUnicode("Одобрить"), CallbackConstants.PETS_CLAIM_APPROVE));
-            if (petClaimApplicationList.size() > 1) row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_right:"), CallbackConstants.PETS_CLAIM_NEXT));
+            if (petClaimApplicationList.size() > 1)
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_right:"), CallbackConstants.PETS_CLAIM_NEXT));
         }
         rowsInline.add(row);
 
@@ -622,7 +687,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else {
             petClaimApplicationRepository.deleteById(currentApplication.getPk());
             log.info("Successfully deleted from petClaimApplicationRepository: " + currentApplication);
-            if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) incrementUserCurrentListIndex(chatId, 1);
+            if (userRepository.findById(chatId).get().getCurrentListIndex() == 0)
+                incrementUserCurrentListIndex(chatId, 1);
         }
 
         petClaimApplicationList = reloadPetClaimApplicationList();
@@ -662,7 +728,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             executeMessage(message);
         } else {
             PetClaimApplication currentApplication = petClaimApplicationList.get(currentPetClaimApplicationIndex);
-            String petClaimApplicationInfo = petClaimApplicationTemplateInsert(chatId, currentApplication);
+            String petClaimApplicationInfo = itemTemplateInsert(chatId, currentApplication);
             EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), petClaimApplicationInfo, petClaimApplicationMenuInlineMarkup(chatId));
             executeMessage(message);
         }
@@ -692,26 +758,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         );
     }
 
-    private String petClaimApplicationTemplateInsert(long chatId, PetClaimApplication currentApplication) {
-        Pet pet = petRepository.findById(currentApplication.getPk().getId()).get();
-        return String.format(PET_CLAIM_APPLICATION_TEMPLATE,
-                pet.getCategory(),
-                pet.getName(),
-                pet.getAge(),
-                ((pet.isSterilized()) ? "да" : "нет"),
-
-                currentApplication.getPk().getChatId(),
-                currentApplication.getFirstname(),
-                (currentApplication.getPhoneNumber() == null) ? "не указан" : currentApplication.getPhoneNumber(),
-                currentApplication.getUserName(),
-                currentApplication.getAppliedAt().toString().substring(0, currentApplication.getAppliedAt().toString().length() - 7),
-
-                currentApplication.getStatus(),
-                (currentApplication.getVisitDate() == null) ? "не назначена" : currentApplication.getVisitDate().toString().substring(0, 10),
-                userRepository.findById(chatId).get().getCurrentListIndex() + 1,
-                petClaimApplicationList.size()
-        );
-    }
     private void registerPetClaimApplication(Update update) {
         //Contact contact = update.getMessage().getContact();
         long chatId = update.getCallbackQuery().getMessage().getChatId();
@@ -765,7 +811,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 petClaimApplicationRepository.save(chosenApplication);
 
                 petClaimApplicationList = reloadPetClaimApplicationList();
-                userNotificationPetClaim(petClaimApplicationPK.getChatId(), "PET_CLAIM", chosenApplication);
+                userNotification(petClaimApplicationPK.getChatId(), chosenApplication);
                 log.info("Pet claim application updated to approved status in repository: " + chosenApplication);
 
                 setUserCurrentListIndex(chatId, petClaimApplicationList.size() - 1);
@@ -794,7 +840,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 volunteerApplicationRepository.save(chosenApplication);
 
                 volunteerApplicationList = reloadVolunteerApplicationList();
-                userNotificationVolunteer(chatId, "VOLUNTEER", chosenApplication);
+                userNotification(chatId, chosenApplication);
                 log.info("Volunteer application updated to approved status in repository: " + chosenApplication);
 
                 setUserCurrentListIndex(chatId, volunteerApplicationList.size() - 1);
@@ -830,9 +876,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> row = new ArrayList<>();
         if (!volunteerApplicationList.isEmpty()) {
-            if (volunteerApplicationList.size() > 1) row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.VOLUNTEER_APPLICATIONS_PREVIOUS));
+            if (volunteerApplicationList.size() > 1)
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.VOLUNTEER_APPLICATIONS_PREVIOUS));
             row.add(createInlineButton(EmojiParser.parseToUnicode("Одобрить"), CallbackConstants.VOLUNTEER_APPLICATIONS_APPROVE));
-            if (volunteerApplicationList.size() > 1) row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_right:"), CallbackConstants.VOLUNTEER_APPLICATIONS_NEXT));
+            if (volunteerApplicationList.size() > 1)
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_right:"), CallbackConstants.VOLUNTEER_APPLICATIONS_NEXT));
         }
         rowsInline.add(row);
 
@@ -856,7 +904,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         Pet defaultPet = new Pet();
 
         long chatId = update.getCallbackQuery().getMessage().getChatId();
-        String textToSend = petTemplateInsert(defaultPet) +
+        String textToSend = itemTemplateInsert(defaultPet) +
                 "\n\n(порядок аргументов:point_up_2:)\n" +
                 "Введите данные нового питомца аналогично примеру:\n" +
                 "Нажмите на текст ниже, чтобы скопировать\n\n" +
@@ -881,7 +929,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else {
             volunteerApplicationRepository.deleteById(currentApplication.getChatId());
             log.info("Successfully deleted from volunteerApplicationList: " + currentApplication);
-            if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) incrementUserCurrentListIndex(chatId, 1);
+            if (userRepository.findById(chatId).get().getCurrentListIndex() == 0)
+                incrementUserCurrentListIndex(chatId, 1);
         }
 
         volunteerApplicationList = reloadVolunteerApplicationList();
@@ -921,24 +970,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             executeMessage(message);
         } else {
             VolunteerApplication currentApplication = volunteerApplicationList.get(currentVolunteerApplicationIndex);
-            String volunteerApplicationInfo = volunteerApplicationTemplateInsert(chatId, currentApplication);
+            String volunteerApplicationInfo = itemTemplateInsert(chatId, currentApplication);
             EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), volunteerApplicationInfo, volunteerApplicationMenuInlineMarkup(chatId));
             executeMessage(message);
         }
-    }
-
-    private String volunteerApplicationTemplateInsert(long chatId, VolunteerApplication currentApplication) {
-        return String.format(VOLUNTEER_APPLICATION_TEMPLATE,
-                currentApplication.getChatId(),
-                currentApplication.getFirstname(),
-                currentApplication.getPhoneNumber(),
-                currentApplication.getUserName(),
-                currentApplication.getAppliedAt().toString().substring(0, currentApplication.getAppliedAt().toString().length() - 7),
-                currentApplication.getStatus(),
-                (currentApplication.getVisitDate() == null) ? "не назначена" : currentApplication.getVisitDate().toString().substring(0, 10),
-                userRepository.findById(chatId).get().getCurrentListIndex() + 1,
-                volunteerApplicationList.size()
-        );
     }
 
     private InlineKeyboardMarkup volunteerMenuInlineMarkup(long chatId) {
@@ -1150,50 +1185,39 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    //FIXME рефакторинг (унаследоваться от заявки)
-    private void userNotificationPetClaim(long chatId, String mode, PetClaimApplication application) {
-        switch (mode) {
-            /*case "VOLUNTEER" -> {
-                String firstText = ":bellhop_bell:<b>Одобрена заявка на волонтерство</b>:bellhop_bell:";
-                String applicationText = approvedPetClaimApplicationTemplateInsert(application);
-                sendMessage(application.getPk().getChatId(), firstText);
-                sendMessage(application.getPk().getChatId(), applicationText);
-                menuCommandReceived(application.getPk().getChatId());
-                log.info("Notified user with chatId = " + chatId + " about approval on volunteer application");
+    private void userNotification(long chatId, PetClaimApplication application) {
+            String firstText = ":bellhop_bell:<b>Одобрена заявка на питомца</b>:bellhop_bell:";
+            Pet pet = petRepository.findById(application.getPk().getId()).get();
+            String applicationText = String.format(PET_CLAIM_APPLICATION_APPROVED_TEMPLATE,
+                    pet.getCategory(),
+                    pet.getName(),
+                    pet.getAge(),
+                    ((pet.isSterilized()) ? "да" : "нет"),
 
-            }*/
-            case "PET_CLAIM" -> {
-                String firstText = ":bellhop_bell:<b>Одобрена заявка на питомца</b>:bellhop_bell:";
-                String applicationText = approvedPetClaimApplicationTemplateInsert(application);
-                sendMessage(application.getPk().getChatId(), firstText);
-                sendMessage(application.getPk().getChatId(), applicationText);
-                menuCommandReceived(application.getPk().getChatId());
-                log.info("Notified user with chatId = " + chatId + " about approval on pet claim application");
-            }
-        }
+                    application.getAppliedAt().toString().substring(0, application.getAppliedAt().toString().length() - 7),
+
+                    application.getStatus(),
+                    (application.getVisitDate() == null) ? "<i>ошибка</i>" : application.getVisitDate().toString().substring(0, 10)
+            );
+            //String applicationText = approvedPetClaimApplicationTemplateInsert(application);
+            sendMessage(application.getPk().getChatId(), firstText);
+            sendMessage(application.getPk().getChatId(), applicationText);
+            menuCommandReceived(application.getPk().getChatId());
+            log.info("Notified user with chatId = " + chatId + " about approval on pet claim application");
     }
-    private void userNotificationVolunteer(long chatId, String mode, VolunteerApplication application) {
-        switch (mode) {
-            case "VOLUNTEER" -> {
-                String firstText = ":bellhop_bell:<b>Одобрена заявка на волонтерство</b>:bellhop_bell:";
-                String applicationText = approvedVolunteerApplicationTemplateInsert(application);
-                sendMessage(application.getChatId(), firstText);
-                sendMessage(application.getChatId(), applicationText);
-                menuCommandReceived(application.getChatId());
-                log.info("Notified user with chatId = " + chatId + " about approval on volunteer application");
+    private void userNotification(long chatId, VolunteerApplication application) {
+        String firstText = ":bellhop_bell:<b>Одобрена заявка на волонтерство</b>:bellhop_bell:";
+        String applicationText = String.format(VOLUNTEER_APPLICATION_APPROVED_TEMPLATE,
+                application.getAppliedAt().toString().substring(0, application.getAppliedAt().toString().length() - 7),
 
-            }
-            /*case "PET_CLAIM" -> {
-                String firstText = ":bellhop_bell:<b>Одобрена заявка на питомца</b>:bellhop_bell:";
-                String applicationText = approvedPetClaimApplicationTemplateInsert(application);
-                sendMessage(chatId, firstText);
-                sendMessage(chatId, applicationText);
-                menuCommandReceived(chatId);
-                log.info("Notified user with chatId = " + chatId + " about approval on pet claim application");
-            }*/
-        }
+                application.getStatus(),
+                (application.getVisitDate() == null) ? "<i>ошибка</i>" : application.getVisitDate().toString().substring(0, 10)
+        );  // approvedVolunteerApplicationTemplateInsert(application);
+        sendMessage(application.getChatId(), firstText);
+        sendMessage(application.getChatId(), applicationText);
+        menuCommandReceived(application.getChatId());
+        log.info("Notified user with chatId = " + chatId + " about approval on volunteer application");
     }
-
 
     private void inlineFeedback(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
@@ -1272,6 +1296,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         executeMessage(message);
     }
+
     private InlineKeyboardMarkup applicationsMenuInlineMarkup() {
         InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
@@ -1473,7 +1498,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void initAddPet(long chatId, String messageText) {
         Pet transientNewPet = parsePet(messageText);
 
-        String textToSend = messageText + "\n" + petTemplateInsert(chatId, transientNewPet) +
+        String textToSend = messageText + "\n" + itemTemplateInsert(chatId, transientNewPet) +
                 "\n\n<b>Проверьте заполнение полей</b>";
 
         EditMessageText message = editMessage(chatId,

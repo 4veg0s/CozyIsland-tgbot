@@ -1,4 +1,4 @@
-package com.cozyisland.CozyIslandtgbot.service;
+package com.cozyisland.CozyIslandtgbot.enums;
 
 public class CallbackConstants {
     public static final String YES_CANCEL = "YES_CANCEL";
