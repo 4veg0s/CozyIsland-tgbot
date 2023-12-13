@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -157,9 +158,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     List<Long> superUsers;
     List<BotCommand> listOfCommands;
     List<Pet> petList;
-    boolean petAddMode = false;
     List<VolunteerApplication> volunteerApplicationList;
     List<PetClaimApplication> petClaimApplicationList;
+    boolean petAddMode = false;
 
 
     public TelegramBot(BotConfig config) {
@@ -502,7 +503,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         incrementUserCurrentListIndex(chatId, 1);
                 }
 
-                petClaimApplicationList = reloadPetClaimApplicationList();
+                petClaimApplicationList = reloadPetClaimApplicationList(chatId);
                 previousItem(update, ItemType.PET_CLAIM_APPLICATION);
             }
             case VOLUNTEER_APPLICATION -> {
@@ -516,7 +517,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         incrementUserCurrentListIndex(chatId, 1);
                 }
 
-                volunteerApplicationList = reloadVolunteerApplicationList();
+                volunteerApplicationList = reloadVolunteerApplicationList(chatId);
                 previousItem(update, ItemType.VOLUNTEER_APPLICATION);
             }
         }
@@ -534,18 +535,35 @@ public class TelegramBot extends TelegramLongPollingBot {
                 showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.PET);
             }
             case PET_CLAIM_APPLICATION -> {
-                if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) {
-                    setUserCurrentListIndex(chatId, petClaimApplicationList.size() - 1);
+                if (superUsers.contains(chatId)) {
+                    if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) {
+                        setUserCurrentListIndex(chatId, petClaimApplicationList.size() - 1);
+                    } else {
+                        incrementUserCurrentListIndex(chatId, -1);
+                    }
                 } else {
-                    incrementUserCurrentListIndex(chatId, -1);
+                    if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) {
+                        setUserCurrentListIndex(chatId, reloadPetClaimApplicationList(chatId).size() - 1);
+                    } else {
+                        incrementUserCurrentListIndex(chatId, -1);
+                    }
                 }
+
                 showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.PET_CLAIM_APPLICATION);
             }
             case VOLUNTEER_APPLICATION -> {
-                if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) {
-                    setUserCurrentListIndex(chatId, volunteerApplicationList.size() - 1);
+                if (superUsers.contains(chatId)) {
+                    if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) {
+                        setUserCurrentListIndex(chatId, volunteerApplicationList.size() - 1);
+                    } else {
+                        incrementUserCurrentListIndex(chatId, -1);
+                    }
                 } else {
-                    incrementUserCurrentListIndex(chatId, -1);
+                    if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) {
+                        setUserCurrentListIndex(chatId, reloadVolunteerApplicationList(chatId).size() - 1);
+                    } else {
+                        incrementUserCurrentListIndex(chatId, -1);
+                    }
                 }
                 showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.VOLUNTEER_APPLICATION);
             }
@@ -569,6 +587,21 @@ public class TelegramBot extends TelegramLongPollingBot {
                 } else {
                     incrementUserCurrentListIndex(chatId, 1);
                 }
+
+                if (superUsers.contains(chatId)) {
+                    if (userRepository.findById(chatId).get().getCurrentListIndex() == petClaimApplicationList.size() - 1) {
+                        setUserCurrentListIndex(chatId, 0);
+                    } else {
+                        incrementUserCurrentListIndex(chatId, 1);
+                    }
+                } else {
+                    if (userRepository.findById(chatId).get().getCurrentListIndex() == reloadPetClaimApplicationList(chatId).size() - 1) {
+                        setUserCurrentListIndex(chatId, 0);
+                    } else {
+                        incrementUserCurrentListIndex(chatId, 1);
+                    }
+                }
+
                 showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.PET_CLAIM_APPLICATION);
             }
             case VOLUNTEER_APPLICATION -> {
@@ -619,7 +652,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                     EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_APPLICATION_MENU));
                     executeMessage(message);
                 } else {
-                    VolunteerApplication currentApplication = this.volunteerApplicationList.get(currentIndex);
+                    VolunteerApplication currentApplication;
+                    if (superUsers.contains(chatId)) {
+                        currentApplication = this.volunteerApplicationList.get(currentIndex);
+                    } else {
+                        currentApplication = reloadVolunteerApplicationList(chatId).get(currentIndex);
+                    }
                     String volunteerApplicationInfo = itemTemplateInsert(chatId, currentApplication);
                     EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), volunteerApplicationInfo, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_APPLICATION_MENU));
                     executeMessage(message);
@@ -631,7 +669,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                     EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.PET_CLAIM_APPLICATION_MENU));
                     executeMessage(message);
                 } else {
-                    PetClaimApplication currentApplication = this.petClaimApplicationList.get(currentIndex);
+                    PetClaimApplication currentApplication;
+                    if (superUsers.contains(chatId)) {
+                        currentApplication = this.petClaimApplicationList.get(currentIndex);
+                    } else {
+                        currentApplication = reloadPetClaimApplicationList(chatId).get(currentIndex);
+                    }
                     String petClaimApplicationInfo = itemTemplateInsert(chatId, currentApplication);
                     EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), petClaimApplicationInfo, customInlineMarkup(chatId, InlineMarkupType.PET_CLAIM_APPLICATION_MENU));
                     executeMessage(message);
@@ -719,16 +762,25 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void inlinePetClaimApplications(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
-        petClaimApplicationList = reloadPetClaimApplicationList();
+        petClaimApplicationList = reloadPetClaimApplicationList(chatId);
         setUserCurrentListIndex(chatId, 0);
 
         showItem(chatId, 0, ItemType.PET_CLAIM_APPLICATION);
     }
 
-    private List<PetClaimApplication> reloadPetClaimApplicationList() {
-        return new ArrayList<>(StreamSupport
-                .stream(petClaimApplicationRepository.findAll().spliterator(), false)
-                .collect(Collectors.toList()));
+    private List<PetClaimApplication> reloadPetClaimApplicationList(long chatId) {
+        List<PetClaimApplication> list = null;
+        if (superUsers.contains(chatId)) {
+            list = new ArrayList<>(StreamSupport
+                    .stream(petClaimApplicationRepository.findAll().spliterator(), false)
+                    .collect(Collectors.toList()));
+        } else {
+            list = new ArrayList<>(StreamSupport
+                    .stream(petClaimApplicationRepository.findByPkChatId(chatId).spliterator(), false)
+                    .collect(Collectors.toList()));
+        }
+
+        return list;
     }
 
     /*private String approvedPetClaimApplicationTemplateInsert(PetClaimApplication currentApplication) {
@@ -778,7 +830,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             petClaimApplicationRepository.save(petClaimApplication);
 
-            petClaimApplicationList = reloadPetClaimApplicationList();
+            petClaimApplicationList = reloadPetClaimApplicationList(chatId);
             adminNotification(NotificationType.PET_CLAIM);
             log.info("Pet claim application saved to repository: " + petClaimApplication);
 
@@ -818,7 +870,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 petClaimApplicationRepository.save(chosenApplication);
 
-                petClaimApplicationList = reloadPetClaimApplicationList();
+                petClaimApplicationList = reloadPetClaimApplicationList(chatId);
                 userNotification(petClaimApplicationPK.getChatId(), chosenApplication);
                 log.info("Pet claim application updated to approved status in repository: " + chosenApplication);
 
@@ -847,7 +899,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 volunteerApplicationRepository.save(chosenApplication);
 
-                volunteerApplicationList = reloadVolunteerApplicationList();
+                volunteerApplicationList = reloadVolunteerApplicationList(chatId);
                 userNotification(chatId, chosenApplication);
                 log.info("Volunteer application updated to approved status in repository: " + chosenApplication);
 
@@ -861,7 +913,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void inlineVolunteerApplications(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
-        volunteerApplicationList = reloadVolunteerApplicationList();
+        volunteerApplicationList = reloadVolunteerApplicationList(chatId);
         setUserCurrentListIndex(chatId, 0);
 
         showItem(chatId, 0, ItemType.VOLUNTEER_APPLICATION);
@@ -872,6 +924,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> row = new ArrayList<>();
         switch (type) {
+            // TODO: пофиксить ситуацию когда нет перехода в раздел своих заявок на волонтерство и невозможно пройти в этот пункт меню
             case VOLUNTEER_APPLICATION_MENU -> {
                 if (!volunteerApplicationList.isEmpty()) {
                     if (volunteerApplicationList.size() > 1)
@@ -886,6 +939,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Добавить", CallbackConstants.VOLUNTEER_APPLICATIONS_ADD))));
                     if (!volunteerApplicationList.isEmpty()) {
                         //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Редактировать", CallbackConstants.VOLUNTEER_APPLICATIONS_EDIT))));
+                        // TODO: дать возможность пользователю удалить свою заявку
                         rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Удалить", CallbackConstants.VOLUNTEER_APPLICATIONS_DELETE))));
                     }
                 }
@@ -902,6 +956,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Отзывы", CallbackConstants.FEEDBACK))));
                 if (superUsers.contains(chatId)) {
                     rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":o:Заявки", CallbackConstants.APPLICATIONS))));
+                } else {
+                    rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Заявки", CallbackConstants.APPLICATIONS))));
                 }
                 keyboardMarkup.setKeyboard(rowsInline);
             }
@@ -1026,10 +1082,19 @@ public class TelegramBot extends TelegramLongPollingBot {
         executeMessage(message);
     }*/
 
-    private List<VolunteerApplication> reloadVolunteerApplicationList() {
-        return new ArrayList<>(StreamSupport
-                .stream(volunteerApplicationRepository.findAll().spliterator(), false)
-                .collect(Collectors.toList()));
+    private List<VolunteerApplication> reloadVolunteerApplicationList(long chatId) {
+        List<VolunteerApplication> list = null;
+        if (superUsers.contains(chatId)) {
+            list = new ArrayList<>(StreamSupport
+                    .stream(volunteerApplicationRepository.findAll().spliterator(), false)
+                    .collect(Collectors.toList()));
+        } else {
+            if (volunteerApplicationRepository.findById(chatId).isPresent()) {
+                list = new ArrayList<>(Arrays.asList(volunteerApplicationRepository.findById(chatId).get()));
+            }
+        }
+
+        return list;
     }
 
     private void sendContactRequest(Update update) {
@@ -1152,7 +1217,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         registerContact(update);
     }
 
-    // TODO: зарегистрировать контакт
     private void registerContact(Update update) {
         Contact contact = update.getMessage().getContact();
         long chatId = contact.getUserId();
@@ -1193,7 +1257,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             volunteerApplicationRepository.save(application);
 
-            volunteerApplicationList = reloadVolunteerApplicationList();
+            volunteerApplicationList = reloadVolunteerApplicationList(chatId);
             setUserCurrentListIndex(chatId, volunteerApplicationList.size() - 1);
             adminNotification(NotificationType.VOLUNTEER);
             log.info("Volunteer's application saved to repository: " + application);
