@@ -1,0 +1,15 @@
+package com.cozyisland.CozyIslandtgbot.enums;
+
+public enum InlineMarkupType {
+    APPLICATIONS_MENU,
+    DONATE_MENU,
+    FEEDBACK_MENU,
+    MAIN_MENU,
+    NEW_FEEDBACK,
+    PET_CLAIM_APPLICATION,
+    PET_CLAIM_APPLICATION_MENU,
+    PETS_MENU,
+    TWO_BUTTON,
+    VOLUNTEER_APPLICATION_MENU,
+    VOLUNTEER_MENU
+}

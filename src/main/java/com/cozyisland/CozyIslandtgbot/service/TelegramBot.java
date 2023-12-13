@@ -2,6 +2,7 @@ package com.cozyisland.CozyIslandtgbot.service;
 
 import com.cozyisland.CozyIslandtgbot.config.BotConfig;
 import com.cozyisland.CozyIslandtgbot.enums.CallbackConstants;
+import com.cozyisland.CozyIslandtgbot.enums.InlineMarkupType;
 import com.cozyisland.CozyIslandtgbot.enums.ItemType;
 import com.cozyisland.CozyIslandtgbot.model.entity.*;
 import com.cozyisland.CozyIslandtgbot.model.entity.User;
@@ -541,12 +542,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             case VOLUNTEER_APPLICATION -> {
                 if (this.volunteerApplicationList.isEmpty()) {
                     String textToSend = "На данный момент нет ни одной заявки на волонтерство";
-                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, volunteerApplicationMenuInlineMarkup(chatId));
+                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_APPLICATION_MENU));
                     executeMessage(message);
                 } else {
                     VolunteerApplication currentApplication = this.volunteerApplicationList.get(currentIndex);
                     String volunteerApplicationInfo = itemTemplateInsert(chatId, currentApplication);
-                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), volunteerApplicationInfo, volunteerApplicationMenuInlineMarkup(chatId));
+                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), volunteerApplicationInfo, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_APPLICATION_MENU));
                     executeMessage(message);
                 }
             }
@@ -788,7 +789,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     "Ожидайте, пожалуйста";
         }
 
-        EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, petClaimApplicationInlineMarkup());
+        EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.PET_CLAIM_APPLICATION));
         executeMessage(message);
     }
 
@@ -851,18 +852,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private InlineKeyboardMarkup petClaimApplicationInlineMarkup() {
-        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":arrow_left:Назад", CallbackConstants.PETS))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
-
-        keyboardMarkup.setKeyboard(rowsInline);
-
-        return keyboardMarkup;
-    }
-
     private void inlineVolunteerApplications(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         volunteerApplicationList = reloadVolunteerApplicationList();
@@ -871,32 +860,136 @@ public class TelegramBot extends TelegramLongPollingBot {
         showVolunteerApplication(chatId, volunteerApplicationList, userRepository.findById(chatId).get().getCurrentListIndex());
     }
 
-    private InlineKeyboardMarkup volunteerApplicationMenuInlineMarkup(long chatId) {
+    private InlineKeyboardMarkup customInlineMarkup(long chatId, InlineMarkupType type) {
         InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> row = new ArrayList<>();
-        if (!volunteerApplicationList.isEmpty()) {
-            if (volunteerApplicationList.size() > 1)
-                row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.VOLUNTEER_APPLICATIONS_PREVIOUS));
-            row.add(createInlineButton(EmojiParser.parseToUnicode("Одобрить"), CallbackConstants.VOLUNTEER_APPLICATIONS_APPROVE));
-            if (volunteerApplicationList.size() > 1)
-                row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_right:"), CallbackConstants.VOLUNTEER_APPLICATIONS_NEXT));
-        }
-        rowsInline.add(row);
+        switch (type) {
+            case VOLUNTEER_APPLICATION_MENU -> {
+                if (!volunteerApplicationList.isEmpty()) {
+                    if (volunteerApplicationList.size() > 1)
+                        row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.VOLUNTEER_APPLICATIONS_PREVIOUS));
+                    row.add(createInlineButton(EmojiParser.parseToUnicode("Одобрить"), CallbackConstants.VOLUNTEER_APPLICATIONS_APPROVE));
+                    if (volunteerApplicationList.size() > 1)
+                        row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_right:"), CallbackConstants.VOLUNTEER_APPLICATIONS_NEXT));
+                }
+                rowsInline.add(row);
 
-        if (superUsers.contains(chatId)) {
-            //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Добавить", CallbackConstants.VOLUNTEER_APPLICATIONS_ADD))));
-            if (!volunteerApplicationList.isEmpty()) {
-                //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Редактировать", CallbackConstants.VOLUNTEER_APPLICATIONS_EDIT))));
-                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Удалить", CallbackConstants.VOLUNTEER_APPLICATIONS_DELETE))));
+                if (superUsers.contains(chatId)) {
+                    //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Добавить", CallbackConstants.VOLUNTEER_APPLICATIONS_ADD))));
+                    if (!volunteerApplicationList.isEmpty()) {
+                        //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Редактировать", CallbackConstants.VOLUNTEER_APPLICATIONS_EDIT))));
+                        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Удалить", CallbackConstants.VOLUNTEER_APPLICATIONS_DELETE))));
+                    }
+                }
+
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":arrow_left:Назад", CallbackConstants.APPLICATIONS))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+                keyboardMarkup.setKeyboard(rowsInline);
+            }
+            case MAIN_MENU -> {
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Питомцы", CallbackConstants.PETS))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Пожертвовать", CallbackConstants.DONATE))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Волонтерство", CallbackConstants.VOLUNTEER))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Отзывы", CallbackConstants.FEEDBACK))));
+                if (superUsers.contains(chatId)) {
+                    rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":o:Заявки", CallbackConstants.APPLICATIONS))));
+                }
+                keyboardMarkup.setKeyboard(rowsInline);
+            }
+            case PET_CLAIM_APPLICATION -> {
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":arrow_left:Назад", CallbackConstants.PETS))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+                keyboardMarkup.setKeyboard(rowsInline);
+            }
+            case PET_CLAIM_APPLICATION_MENU -> {
+                if (!petClaimApplicationList.isEmpty()) {
+                    if (petClaimApplicationList.size() > 1)
+                        row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.PETS_CLAIM_PREVIOUS));
+                    row.add(createInlineButton(EmojiParser.parseToUnicode("Одобрить"), CallbackConstants.PETS_CLAIM_APPROVE));
+                    if (petClaimApplicationList.size() > 1)
+                        row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_right:"), CallbackConstants.PETS_CLAIM_NEXT));
+                }
+                rowsInline.add(row);
+
+                if (superUsers.contains(chatId)) {
+                    //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Добавить", CallbackConstants.PETS_CLAIM_ADD))));
+                    if (petClaimApplicationList.size() > 1) {
+                        //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Редактировать", CallbackConstants.PETS_CLAIM_EDIT))));
+                        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Удалить", CallbackConstants.PETS_CLAIM_DELETE))));
+                    }
+                }
+
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":arrow_left:Назад", CallbackConstants.APPLICATIONS))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+                keyboardMarkup.setKeyboard(rowsInline);
+            }
+            case PETS_MENU -> {
+                if (petList.size() > 1) {
+                    row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.PETS_PREVIOUS));
+                    row.add(createInlineButton(EmojiParser.parseToUnicode("Забрать"), CallbackConstants.PETS_CLAIM));
+                    row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_right:"), CallbackConstants.PETS_NEXT));
+                }
+                rowsInline.add(row);
+
+                if (superUsers.contains(chatId)) {
+                    rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":o:Добавить", CallbackConstants.PETS_ADD))));
+                    if (petList.size() > 1) {
+                        //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":o:Редактировать", CallbackConstants.PETS_EDIT))));
+                        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":o:Удалить", CallbackConstants.PETS_DELETE))));
+                    }
+                }
+
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+                keyboardMarkup.setKeyboard(rowsInline);
+            }
+            case DONATE_MENU -> {
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Деньги :money_with_wings:", CallbackConstants.DONATE_MONEY))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Корм и консервы :stew:", CallbackConstants.DONATE_FOOD))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Лекарства :pill:", CallbackConstants.DONATE_DRUGS))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Хозяйственные нужды :broom:", CallbackConstants.DONATE_HOUSEKEEPING))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+                keyboardMarkup.setKeyboard(rowsInline);
+            }
+            case NEW_FEEDBACK -> {
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_1));
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_2));
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_3));
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_4));
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_5));
+                rowsInline.add(row);
+
+                //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":arrow_left:Назад", CallbackConstants.BACK))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+                keyboardMarkup.setKeyboard(rowsInline);
+            }
+            case FEEDBACK_MENU -> {
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Просмотреть отзывы", CallbackConstants.FEEDBACK_SHOW))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Оставить отзыв", CallbackConstants.FEEDBACK_NEW))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+                keyboardMarkup.setKeyboard(rowsInline);
+            }
+            case VOLUNTEER_MENU -> {
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Продолжить", CallbackConstants.VOLUNTEER_SEND_CONTACT))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+                keyboardMarkup.setKeyboard(rowsInline);
+            }
+            case APPLICATIONS_MENU -> {
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Питомцы:dog:", CallbackConstants.PETS_CLAIM_APPLICATIONS))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Волонтеры:handshake:", CallbackConstants.VOLUNTEER_APPLICATIONS))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+                keyboardMarkup.setKeyboard(rowsInline);
             }
         }
-
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":arrow_left:Назад", CallbackConstants.APPLICATIONS))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
-
-        keyboardMarkup.setKeyboard(rowsInline);
-
         return keyboardMarkup;
     }
 
@@ -966,26 +1059,14 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void showVolunteerApplication(long chatId, List<VolunteerApplication> volunteerApplicationList, int currentVolunteerApplicationIndex) {
         if (volunteerApplicationList.isEmpty()) {
             String textToSend = "На данный момент нет ни одной заявки на волонтерство";
-            EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, volunteerApplicationMenuInlineMarkup(chatId));
+            EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_APPLICATION_MENU));
             executeMessage(message);
         } else {
             VolunteerApplication currentApplication = volunteerApplicationList.get(currentVolunteerApplicationIndex);
             String volunteerApplicationInfo = itemTemplateInsert(chatId, currentApplication);
-            EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), volunteerApplicationInfo, volunteerApplicationMenuInlineMarkup(chatId));
+            EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), volunteerApplicationInfo, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_APPLICATION_MENU));
             executeMessage(message);
         }
-    }
-
-    private InlineKeyboardMarkup volunteerMenuInlineMarkup(long chatId) {
-        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Продолжить", CallbackConstants.VOLUNTEER_SEND_CONTACT))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
-
-        keyboardMarkup.setKeyboard(rowsInline);
-
-        return keyboardMarkup;
     }
 
     private void inlineVolunteerSendContact(Update update) {
@@ -1071,14 +1152,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
         String textToSend = "Оставьте Ваш отзыв о нашем приюте";
-        EditMessageText message = editMessage(chatId, messageId, textToSend, newFeedbackInlineMarkup());
+        EditMessageText message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.NEW_FEEDBACK));
         executeMessage(message);
     }
 
     private void inlineReturnToMenu(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
-        EditMessageText message = editMessage(chatId, messageId, "<b>Главное меню</b> нашего приюта", mainMenuInlineMarkup(chatId));
+        EditMessageText message = editMessage(chatId, messageId, "<b>Главное меню</b> нашего приюта", customInlineMarkup(chatId, InlineMarkupType.MAIN_MENU));
         executeMessage(message);
     }
 
@@ -1088,7 +1169,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         String textToSend = "<b>Раздел волонтерства</b>\n" +
                 "Чтобы оставить заявку на волонтерскую помощь нашему приюту, отправьте нам свой контакт, и мы свяжемся с Вами";
 
-        EditMessageText message = editMessage(chatId, messageId, textToSend, volunteerMenuInlineMarkup(chatId));
+        EditMessageText message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_MENU));
 
         executeMessage(message);
     }
@@ -1224,67 +1305,19 @@ public class TelegramBot extends TelegramLongPollingBot {
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
         String textToSend = "<b>Раздел отзывов</b> :speech_balloon:";
 
-        EditMessageText message = editMessage(chatId, messageId, textToSend, feedbackMenuInlineMarkup());
+        EditMessageText message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_MENU));
 
         executeMessage(message);
     }
-
-    private InlineKeyboardMarkup feedbackMenuInlineMarkup() {
-        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Просмотреть отзывы", CallbackConstants.FEEDBACK_SHOW))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Оставить отзыв", CallbackConstants.FEEDBACK_NEW))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
-
-        keyboardMarkup.setKeyboard(rowsInline);
-
-        return keyboardMarkup;
-    }
-
-    private InlineKeyboardMarkup newFeedbackInlineMarkup() {
-        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-        List<InlineKeyboardButton> row = new ArrayList<>();
-        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_1));
-        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_2));
-        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_3));
-        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_4));
-        row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_5));
-        rowsInline.add(row);
-
-        //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":arrow_left:Назад", CallbackConstants.BACK))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
-
-        keyboardMarkup.setKeyboard(rowsInline);
-
-        return keyboardMarkup;
-    }
-
     private void inlineDonate(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
         String textToSend = "<b>Раздел пожертвований</b>\n" +
                 "Мы принимаем:";
 
-        EditMessageText message = editMessage(chatId, messageId, textToSend, donateMenuInlineMarkup());
+        EditMessageText message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.DONATE_MENU));
 
         executeMessage(message);
-    }
-
-    private InlineKeyboardMarkup donateMenuInlineMarkup() {
-        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Деньги :money_with_wings:", CallbackConstants.DONATE_MONEY))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Корм и консервы :stew:", CallbackConstants.DONATE_FOOD))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Лекарства :pill:", CallbackConstants.DONATE_DRUGS))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Хозяйственные нужды :broom:", CallbackConstants.DONATE_HOUSEKEEPING))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
-
-        keyboardMarkup.setKeyboard(rowsInline);
-
-        return keyboardMarkup;
     }
 
     private void inlineApplications(Update update) {
@@ -1292,22 +1325,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
         String textToSend = "<b>Раздел заявок</b>";
 
-        EditMessageText message = editMessage(chatId, messageId, textToSend, applicationsMenuInlineMarkup());
+        EditMessageText message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.APPLICATIONS_MENU));
 
         executeMessage(message);
-    }
-
-    private InlineKeyboardMarkup applicationsMenuInlineMarkup() {
-        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Питомцы:dog:", CallbackConstants.PETS_CLAIM_APPLICATIONS))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Волонтеры:handshake:", CallbackConstants.VOLUNTEER_APPLICATIONS))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
-
-        keyboardMarkup.setKeyboard(rowsInline);
-
-        return keyboardMarkup;
     }
 
     private void startCommandReceived(Update update) {
@@ -1336,7 +1356,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         message.setMessageId(currentUser.getMenuMessageId());
         deleteMessage(message);
 
-        currentUser.setMenuMessageId(sendMessage(chatId, "<b>Главное меню</b> нашего приюта", mainMenuInlineMarkup(chatId)));
+        currentUser.setMenuMessageId(sendMessage(chatId, "<b>Главное меню</b> нашего приюта", customInlineMarkup(chatId, InlineMarkupType.MAIN_MENU)));
         userRepository.save(currentUser);
     }
 
@@ -1428,21 +1448,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         button.setCallbackData(callbackData);
 
         return button;
-    }
-
-    private InlineKeyboardMarkup mainMenuInlineMarkup(long chatId) {
-        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Питомцы", CallbackConstants.PETS))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Пожертвовать", CallbackConstants.DONATE))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Волонтерство", CallbackConstants.VOLUNTEER))));
-        rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Отзывы", CallbackConstants.FEEDBACK))));
-        if (superUsers.contains(chatId)) {
-            rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":o:Заявки", CallbackConstants.APPLICATIONS))));
-        }
-        keyboardMarkup.setKeyboard(rowsInline);
-
-        return keyboardMarkup;
     }
 
     private InlineKeyboardMarkup twoButtonInlineMarkup(String buttonName1, String buttonName2, String callbackName1, String callbackName2) {
