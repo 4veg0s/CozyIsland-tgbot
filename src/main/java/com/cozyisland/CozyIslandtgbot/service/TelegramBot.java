@@ -882,10 +882,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 petClaimApplicationRepository.save(chosenApplication);
 
-                petClaimApplicationList = reloadPetClaimApplicationList(chatId);
                 userNotification(petClaimApplicationPK.getChatId(), chosenApplication);
                 log.info("Pet claim application updated to approved status in repository: " + chosenApplication);
 
+                petClaimApplicationList = reloadPetClaimApplicationList(chatId);
                 //setUserCurrentListIndex(chatId, petClaimApplicationList.size() - 1);
                 showItem(chatId, currentIndex, ItemType.PET_CLAIM_APPLICATION);
             }
@@ -911,9 +911,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 volunteerApplicationRepository.save(chosenApplication);
 
-                volunteerApplicationList = reloadVolunteerApplicationList(chatId);
                 userNotification(chosenApplication);
                 log.info("Volunteer application updated to approved status in repository: " + chosenApplication);
+
+                volunteerApplicationList = reloadVolunteerApplicationList(chatId);
 
                 setUserCurrentListIndex(chatId, volunteerApplicationList.size() - 1);
                 showItem(chatId, volunteerApplicationList.size() - 1, ItemType.VOLUNTEER_APPLICATION);
