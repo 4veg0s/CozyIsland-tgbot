@@ -21,4 +21,5 @@ public class PetClaimApplication {
     private Timestamp appliedAt;
     private String status = "на рассмотрении";
     private Timestamp visitDate;
+    private int notificationMessageId;
 }

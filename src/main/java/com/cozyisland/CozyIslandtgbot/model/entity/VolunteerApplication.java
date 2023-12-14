@@ -21,4 +21,5 @@ public class VolunteerApplication {
     private Timestamp appliedAt;
     private String status = "на рассмотрении";
     private Timestamp visitDate;
+    private int notificationMessageId;
 }

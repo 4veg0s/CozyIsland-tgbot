@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -90,6 +89,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private VolunteerApplicationRepository volunteerApplicationRepository;
     @Autowired
     private PetClaimApplicationRepository petClaimApplicationRepository;
+    @Autowired
+    private FeedbackRepository feedbackRepository;
     @Autowired
     private PetImageRepository petImageRepository;
     @Autowired
@@ -498,6 +499,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                     log.error("Couldn't find application in volunteerApplicationList");
                 } else {
                     petClaimApplicationRepository.deleteById(currentApplication.getPk());
+                    DeleteMessage message = DeleteMessage.builder()
+                            .chatId(currentApplication.getPk().getChatId())
+                            .messageId(currentApplication.getNotificationMessageId())
+                            .build();
+                    deleteMessage(message);
                     log.info("Successfully deleted from petClaimApplicationRepository: " + currentApplication);
                     if (userRepository.findById(chatId).get().getCurrentListIndex() == 0)
                         incrementUserCurrentListIndex(chatId, 1);
@@ -512,6 +518,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                     log.error("Couldn't find application in volunteerApplicationList");
                 } else {
                     volunteerApplicationRepository.deleteById(currentApplication.getChatId());
+                    DeleteMessage message = DeleteMessage.builder()
+                            .chatId(currentApplication.getChatId())
+                            .messageId(currentApplication.getNotificationMessageId())
+                            .build();
+                    deleteMessage(message);
                     log.info("Successfully deleted from volunteerApplicationList: " + currentApplication);
                     if (userRepository.findById(chatId).get().getCurrentListIndex() == 0)
                         incrementUserCurrentListIndex(chatId, 1);
@@ -856,8 +867,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void approvePetClaimApplication(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
-
-        PetClaimApplication chosenApplication = petClaimApplicationList.get(userRepository.findById(chatId).get().getCurrentListIndex());
+        int currentIndex = userRepository.findById(chatId).get().getCurrentListIndex();
+        PetClaimApplication chosenApplication = petClaimApplicationList.get(currentIndex);
         PetClaimApplicationPK petClaimApplicationPK = chosenApplication.getPk();
 
         if (petClaimApplicationRepository.findById(petClaimApplicationPK).isPresent()) {
@@ -875,8 +886,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 userNotification(petClaimApplicationPK.getChatId(), chosenApplication);
                 log.info("Pet claim application updated to approved status in repository: " + chosenApplication);
 
-                setUserCurrentListIndex(chatId, petClaimApplicationList.size() - 1);
-                showItem(chatId, petClaimApplicationList.size() - 1, ItemType.PET_CLAIM_APPLICATION);
+                //setUserCurrentListIndex(chatId, petClaimApplicationList.size() - 1);
+                showItem(chatId, currentIndex, ItemType.PET_CLAIM_APPLICATION);
             }
         } else {
             log.error("Couldn't find pet claim application in repository: " + chosenApplication);
@@ -888,9 +899,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
 
         VolunteerApplication chosenApplication = volunteerApplicationList.get(userRepository.findById(chatId).get().getCurrentListIndex());
-
-        if (volunteerApplicationRepository.findById(chatId).isPresent()) {
-            if (volunteerApplicationRepository.findById(chatId).get().getStatus().equals("на рассмотрении")) {
+        // fixme
+        if (volunteerApplicationRepository.findById(chosenApplication.getChatId()).isPresent()) {
+            if (volunteerApplicationRepository.findById(chosenApplication.getChatId()).get().getStatus().equals("на рассмотрении")) {
                 chosenApplication.setStatus("одобрена");
 
                 Calendar cal = Calendar.getInstance();
@@ -901,14 +912,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                 volunteerApplicationRepository.save(chosenApplication);
 
                 volunteerApplicationList = reloadVolunteerApplicationList(chatId);
-                userNotification(chatId, chosenApplication);
+                userNotification(chosenApplication);
                 log.info("Volunteer application updated to approved status in repository: " + chosenApplication);
 
                 setUserCurrentListIndex(chatId, volunteerApplicationList.size() - 1);
                 showItem(chatId, volunteerApplicationList.size() - 1, ItemType.VOLUNTEER_APPLICATION);
             }
         } else {
-            log.error("Couldn't find pet claim application in repository: " + chosenApplication);
+            log.error("Couldn't find volunteer application in repository: " + chosenApplication);
         }
     }
 
@@ -1276,7 +1287,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             textToSend = "Ваша предыдущая заявка на волонтерство уже находится в обработке\n\n" +
                     "<i>Просмотреть свои заявки и взаимодействовать с ними Вы можете в разделе \"Мои заявки\" главного меню</i>";
         }
-        sendMessage(chatId, textToSend, customInlineMarkup(chatId, InlineMarkupType.RETURN_TO_MENU));
+        setUserMenuMessageId(chatId, sendMessage(chatId, textToSend, customInlineMarkup(chatId, InlineMarkupType.RETURN_TO_MENU)));
     }
 
     private void setUserCurrentListIndex(long chatId, int index) {
@@ -1344,11 +1355,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             );
             //String applicationText = approvedPetClaimApplicationTemplateInsert(application);
             sendMessage(application.getPk().getChatId(), firstText);
-            sendMessage(application.getPk().getChatId(), applicationText);
+
+            setNotificationMessageIdPetClaim(application, sendMessage(application.getPk().getChatId(), applicationText));
             menuCommandReceived(application.getPk().getChatId());
             log.info("Notified user with chatId = " + chatId + " about approval on pet claim application");
     }
-    private void userNotification(long chatId, VolunteerApplication application) {
+    private void userNotification(VolunteerApplication application) {
         String firstText = ":bellhop_bell:<b>Одобрена заявка на волонтерство</b>:bellhop_bell:";
         String applicationText = String.format(VOLUNTEER_APPLICATION_APPROVED_TEMPLATE,
                 application.getAppliedAt().toString().substring(0, application.getAppliedAt().toString().length() - 7),
@@ -1357,9 +1369,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 (application.getVisitDate() == null) ? "<i>ошибка</i>" : application.getVisitDate().toString().substring(0, 10)
         );  // approvedVolunteerApplicationTemplateInsert(application);
         sendMessage(application.getChatId(), firstText);
-        sendMessage(application.getChatId(), applicationText);
+
+        setNotificationMessageIdVolunteer(application, sendMessage(application.getChatId(), applicationText));
         menuCommandReceived(application.getChatId());
-        log.info("Notified user with chatId = " + chatId + " about approval on volunteer application");
+        log.info("Notified user with chatId = " + application.getChatId() + " about approval on volunteer application");
     }
 
     private void inlineFeedback(Update update) {
@@ -1451,6 +1464,26 @@ public class TelegramBot extends TelegramLongPollingBot {
         userRepository.save(user);
     }
 
+    // FIXME не удаляется уведомление если удалить с админа
+    private void setNotificationMessageIdVolunteer(VolunteerApplication application, int messageId) {
+            if (volunteerApplicationRepository.findById(application.getChatId()).isPresent()) {
+                application.setNotificationMessageId(messageId);
+                volunteerApplicationRepository.save(application);
+            } else {
+                log.error("Couldn't find volunteer application in repo, chatId = " + application.getChatId());
+            }
+    }
+
+    private void setNotificationMessageIdPetClaim(PetClaimApplication application, int messageId) {
+        PetClaimApplicationPK pk = new PetClaimApplicationPK(application.getPk().getId(), application.getPk().getChatId());
+        if (petClaimApplicationRepository.findById(pk).isPresent()) {
+            application.setNotificationMessageId(messageId);
+            petClaimApplicationRepository.save(application);
+        } else {
+            log.error("Couldn't find pet claim application in repo, chatId = " + application.getPk().getChatId());
+        }
+    }
+
     private void menuCommandReceived(long chatId) {
         DeleteMessage message = new DeleteMessage();
         message.setChatId(chatId);
@@ -1496,7 +1529,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             execute(message);
             log.info("Message was successfully deleted");
         } catch (TelegramApiException e) {
-            log.error("Error occurred while attempting to delete message");
+            log.error("Error occurred while attempting to delete message: " + e.getMessage());
         }
     }
 

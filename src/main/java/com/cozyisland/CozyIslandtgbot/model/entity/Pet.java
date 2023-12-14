@@ -2,7 +2,6 @@ package com.cozyisland.CozyIslandtgbot.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.boot.autoconfigure.web.WebProperties;
 
 @Builder
 @NoArgsConstructor
@@ -14,7 +13,7 @@ import org.springframework.boot.autoconfigure.web.WebProperties;
 public class Pet {
 
     @Column(length = 255000)
-    @jakarta.persistence.Id
+    @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     private String category = "не указана";
