@@ -876,7 +876,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 chosenApplication.setStatus("одобрена");
 
                 Calendar cal = Calendar.getInstance();
-                cal.setTime(chosenApplication.getAppliedAt());
+                cal.set(Calendar.HOUR_OF_DAY, 0);
                 cal.add(Calendar.DAY_OF_WEEK, 2);
                 chosenApplication.setVisitDate(new Timestamp(cal.getTime().getTime()));
 
@@ -886,8 +886,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 log.info("Pet claim application updated to approved status in repository: " + chosenApplication);
 
                 petClaimApplicationList = reloadPetClaimApplicationList(chatId);
-                //setUserCurrentListIndex(chatId, petClaimApplicationList.size() - 1);
-                showItem(chatId, currentIndex, ItemType.PET_CLAIM_APPLICATION);
+                setUserCurrentListIndex(chatId, petClaimApplicationList.size() - 1);
+                showItem(chatId, petClaimApplicationList.size() - 1, ItemType.PET_CLAIM_APPLICATION);
             }
         } else {
             log.error("Couldn't find pet claim application in repository: " + chosenApplication);
@@ -899,7 +899,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
 
         VolunteerApplication chosenApplication = volunteerApplicationList.get(userRepository.findById(chatId).get().getCurrentListIndex());
-        // fixme
         if (volunteerApplicationRepository.findById(chosenApplication.getChatId()).isPresent()) {
             if (volunteerApplicationRepository.findById(chosenApplication.getChatId()).get().getStatus().equals("на рассмотрении")) {
                 chosenApplication.setStatus("одобрена");
