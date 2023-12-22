@@ -54,6 +54,7 @@ public class CallbackConstants {
 
 
     // РАЗДЕЛ "ВОЛОНТЕРСТВО"
+    public static final String VOLUNTEER_APPLY = "VOLUNTEER_APPLY";
     public static final String VOLUNTEER_APPLICATIONS = "VOLUNTEER_APPLICATIONS";
     public static final String VOLUNTEER_APPLICATIONS_PREVIOUS = "VOLUNTEER_APPLICATIONS_PREVIOUS";
     public static final String VOLUNTEER_APPLICATIONS_NEXT = "VOLUNTEER_APPLICATIONS_NEXT";
