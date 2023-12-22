@@ -1339,7 +1339,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    // TODO: при получении уведомления свернуть меню в следующем сообщении для компактности
     private void userNotification(long chatId, PetClaimApplication application) {
             String firstText = ":bellhop_bell:<b>Одобрена заявка на питомца</b>:bellhop_bell:";
             Pet pet = petRepository.findById(application.getPk().getId()).get();
@@ -1358,7 +1357,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage(application.getPk().getChatId(), firstText);
 
             setNotificationMessageIdPetClaim(application, sendMessage(application.getPk().getChatId(), applicationText));
-            setUserMenuMessageId(application.getPk().getChatId(), sendMessage(application.getPk().getChatId(), "<b>Главное меню</b>", customInlineMarkup(chatId, InlineMarkupType.RETURN_TO_MENU)));
+            setUserMenuMessageId(application.getPk().getChatId(), sendMessage(application.getPk().getChatId(), "<b>Главное меню</b>", customInlineMarkup(application.getPk().getChatId(), InlineMarkupType.RETURN_TO_MENU)));
             log.info("Notified user with chatId = " + chatId + " about approval on pet claim application");
     }
     private void userNotification(VolunteerApplication application) {
@@ -1372,7 +1371,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(application.getChatId(), firstText);
 
         setNotificationMessageIdVolunteer(application, sendMessage(application.getChatId(), applicationText));
-        setUserMenuMessageId(application.getChatId(), sendMessage(application.getChatId(), "<b>Главное меню</b>", customInlineMarkup(chatId, InlineMarkupType.RETURN_TO_MENU)));
+        setUserMenuMessageId(application.getChatId(), sendMessage(application.getChatId(), "<b>Главное меню</b>", customInlineMarkup(application.getChatId(), InlineMarkupType.RETURN_TO_MENU)));
         log.info("Notified user with chatId = " + application.getChatId() + " about approval on volunteer application");
     }
 
