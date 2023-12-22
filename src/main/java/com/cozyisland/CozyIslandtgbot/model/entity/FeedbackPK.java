@@ -8,6 +8,7 @@ import lombok.*;
 
 import java.io.Serializable;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

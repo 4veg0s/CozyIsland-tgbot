@@ -280,10 +280,20 @@ public class TelegramBot extends TelegramLongPollingBot {
                         inlineFeedback(update);
                     }
                     case CallbackConstants.FEEDBACK_SHOW -> {
-                        // TODO: просмотреть отзывы
+                        inlineFeedbackShow(update);
+                    }
+                    case CallbackConstants.FEEDBACK_SHOW_MY -> {
+                        // FIXME список моих отзывов
+                        // inlineMyFeedback(update);
                     }
                     case CallbackConstants.FEEDBACK_NEW -> {
-                        inlineFeedbackNew(update);
+                        // FIXME если телефон уже есть не просить его отправить
+                        contactRequestWarning(update, ItemType.FEEDBACK);
+                    }
+                    default -> {
+                        if (callbackData.startsWith("FEEDBACK_NEW_RATE")) {
+                            rateFeedback(update);
+                        }
                     }
                 }
             } else if (callbackData.startsWith("VOLUNTEER")) {
@@ -352,13 +362,37 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
+    private void rateFeedback(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+        String callbackData = update.getCallbackQuery().getData();
+        int rate = Integer.parseInt(callbackData.substring(callbackData.length() - 2, callbackData.length() - 1));
+
+        registerItemApplication(update, ItemType.FEEDBACK);
+    }
+
+    private void inlineFeedbackShow(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        int messageId = update.getCallbackQuery().getMessage().getMessageId();
+        String textToSend = "<b>Раздел отзывов :speaking_head_in_silhouette:</b>";
+
+        EditMessageText message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_SHOW));
+
+        executeMessage(message);
+    }
+
     private void inlineVolunteer(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
 
-        // fixme текст для волонтера
         String textToSend = "<b>Раздел волонтерства</b>\n" +
-                "Вы можете стать волонтером в нашем приюте";
+                "В нашем приюте волонтёры занимаются уходом за питомцами, а также помогают содержать приют в чистоте.\n" +
+                "В обязанности волонтёра может входить:\n" +
+                "- кормление животных\n" +
+                "- уход за больными животными\n" +
+                "- уборка помещений приюта\n" +
+                "- ведение журнала о состоянии каждого питомца и т.д.\n\n" +
+                "Вы можете помочь нам, став нашим волонтером. Для этого оставьте заявку";
 
         EditMessageText message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_MENU));
         executeMessage(message);
@@ -708,6 +742,24 @@ public class TelegramBot extends TelegramLongPollingBot {
                     executeMessage(message);
                 }
             }
+            case FEEDBACK_ALL -> {
+                if (reloadPetClaimApplicationList(chatId).isEmpty()) {
+                    String textToSend = "На данный момент у нашего приюта нет ни одного отзыва";
+                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
+                    executeMessage(message);
+                } else {
+                    // TODO: реализовать вывод списка отзывов
+                    PetClaimApplication currentApplication;
+                    if (superUsers.contains(chatId)) {
+                        currentApplication = this.petClaimApplicationList.get(currentIndex);
+                    } else {
+                        currentApplication = reloadPetClaimApplicationList(chatId).get(currentIndex);
+                    }
+                    String petClaimApplicationInfo = itemTemplateInsert(chatId, currentApplication);
+                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), petClaimApplicationInfo, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
+                    executeMessage(message);
+                }
+            }
         }
     }
 
@@ -794,6 +846,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                         "Чтобы оставить заявку на волонтерскую помощь нашему приюту, отправьте нам свой контакт, и мы свяжемся с Вами";
                 message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.PROCEED_MENU));
             }
+            case FEEDBACK -> {
+                textToSend = "<b>Раздел отзывов:speaking_head_in_silhouette:</b>\n" +
+                        "Чтобы оставить отзыв о нашем приюте, отправьте нам свой контакт";
+                message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.PROCEED_MENU));
+            }
         }
 
         executeMessage(message);
@@ -819,6 +876,34 @@ public class TelegramBot extends TelegramLongPollingBot {
                     .collect(Collectors.toList()));
         }
 
+        return list;
+    }
+
+    private List<Feedback> reloadFeedbackList(long chatId, FeedbackType type) {
+        List<Feedback> list = new ArrayList<>();
+        switch (type) {
+            case ALL -> {
+                if (superUsers.contains(chatId)) {
+                    list = new ArrayList<>(StreamSupport
+                            .stream(feedbackRepository.findAll().spliterator(), false)
+                            .collect(Collectors.toList()));
+                } else {
+                    list = new ArrayList<>(StreamSupport
+                            .stream(feedbackRepository.findByStatusApproved().spliterator(), false)
+                            .collect(Collectors.toList()));
+                }
+            }
+            case MY -> {
+                list = new ArrayList<>(StreamSupport
+                        .stream(feedbackRepository.findByPkChatId(chatId).spliterator(), false)
+                        .collect(Collectors.toList()));
+            }
+            case TO_APPROVE -> {
+                list = new ArrayList<>(StreamSupport
+                        .stream(feedbackRepository.findByStatusToApprove().spliterator(), false)
+                        .collect(Collectors.toList()));
+            }
+        }
         return list;
     }
 
@@ -1017,12 +1102,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 keyboardMarkup.setKeyboard(rowsInline);
             }
-            case NEW_FEEDBACK -> {
-                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_1));
-                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_2));
-                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_3));
-                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_4));
-                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_5));
+            case FEEDBACK_NEW -> {
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_RATE_1));
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_RATE_2));
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_RATE_3));
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_RATE_4));
+                row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_RATE_5));
                 rowsInline.add(row);
 
                 //rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":arrow_left:Назад", CallbackConstants.BACK))));
@@ -1033,6 +1118,37 @@ public class TelegramBot extends TelegramLongPollingBot {
             case FEEDBACK_MENU -> {
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Просмотреть отзывы", CallbackConstants.FEEDBACK_SHOW))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Оставить отзыв", CallbackConstants.FEEDBACK_NEW))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+                keyboardMarkup.setKeyboard(rowsInline);
+            }
+            case FEEDBACK_SHOW -> {
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Все отзывы:busts_in_silhouette:", CallbackConstants.FEEDBACK_SHOW_ALL))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Мои отзывы:bust_in_silhouette:", CallbackConstants.FEEDBACK_SHOW_MY))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":arrow_left:Назад", CallbackConstants.FEEDBACK))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
+
+                keyboardMarkup.setKeyboard(rowsInline);
+            }
+            case FEEDBACK_LIST_MENU -> {
+                if (!feedbackList.isEmpty()) {
+                    if (feedbackList.size() > 1)
+                        row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.FEEDBACK_LIST_PREVIOUS));
+                    if (superUsers.contains(chatId) && !feedbackList.isEmpty())
+                        row.add(createInlineButton(EmojiParser.parseToUnicode("Одобрить"), CallbackConstants.FEEDBACK_LIST_APPROVE));
+                    if (feedbackList.size() > 1)
+                        row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_right:"), CallbackConstants.FEEDBACK_LIST_NEXT));
+                }
+                rowsInline.add(row);
+
+                /*if (superUsers.contains(chatId)) {
+                    rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Добавить", CallbackConstants.PETS_CLAIM_ADD))));
+                }*/
+
+                if (!feedbackList.isEmpty()) {
+                    rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Удалить", CallbackConstants.FEEDBACK_LIST_DELETE))));
+                }
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":arrow_left:Назад", CallbackConstants.FEEDBACK))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
@@ -1187,7 +1303,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
         String textToSend = "Оставьте Ваш отзыв о нашем приюте";
-        EditMessageText message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.NEW_FEEDBACK));
+        EditMessageText message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_NEW));
         executeMessage(message);
     }
 
@@ -1250,6 +1366,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (user.getState() == UserState.VOLUNTEER_STATE) {
             registerItemApplication(update, ItemType.VOLUNTEER_APPLICATION);
         } else if (user.getState() == UserState.PET_CLAIM_STATE) {
+            registerItemApplication(update, ItemType.PET_CLAIM_APPLICATION);
+        } else if (user.getState() == UserState.FEEDBACK_STATE) {
             registerItemApplication(update, ItemType.PET_CLAIM_APPLICATION);
         }
     }
@@ -1317,6 +1435,32 @@ public class TelegramBot extends TelegramLongPollingBot {
                             "<i>Просмотреть свои заявки и взаимодействовать с ними Вы можете в разделе \"Мои заявки\" главного меню</i>";
                 }
             }
+            case FEEDBACK -> {
+                feedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
+                FeedbackPK feedbackPK = FeedbackPK.builder()
+                        .chatId(chatId)
+                        .build();
+                if (feedbackRepository.findByChatIdAndStatusToApprove(feedbackPK.getChatId()).size() < 3) {
+                    Feedback feedback = Feedback.builder()
+                            .pk(feedbackPK)
+                            .status("на рассмотрении")
+                            .build();
+
+                    feedbackRepository.save(feedback);
+
+                    feedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
+                    adminNotification(NotificationType.FEEDBACK);
+                    log.info("New feedback saved to repository: " + feedback);
+
+                    textToSend = "Ваш отзыв отправлен на рассмотрение модератором и будет опубликован после одобрения\n" +
+                            "Ожидайте, пожалуйста\n\n" +
+                            "<i>Просмотреть свои отзывы и взаимодействовать с ними Вы можете в подразделе \"Мои отзывы\" раздела \"Отзывы\"</i>";
+                } else {
+                    textToSend = "К сожалению, вы не можете оставить отзыв, если 3 ваших отзыва находится на рассмотрении\n" +
+                            "Ожидайте, пожалуйста\n\n" +
+                            "<i>Просмотреть свои отзывы и взаимодействовать с ними Вы можете в подразделе \"Мои отзывы\" раздела \"Отзывы\"</i>";
+                }
+            }
         }
 
         if (update.hasCallbackQuery()) {
@@ -1370,6 +1514,16 @@ public class TelegramBot extends TelegramLongPollingBot {
                     log.info("Notified admin with chatId = " + adminId + " about new volunteer application");
                 }
             }
+            case FEEDBACK -> {
+                String firstText = ":bellhop_bell:<b>Новый отзыв ждет одобрения</b>:bellhop_bell:";
+                for (long adminId : superUsers) {
+                    sendMessage(adminId, firstText);
+                    menuCommandReceived(adminId);
+                    setUserCurrentListIndex(adminId, feedbackList.size() - 1);
+                    showItem(adminId, feedbackList.size() - 1, ItemType.FEEDBACK);
+                    log.info("Notified admin with chatId = " + adminId + " about new feedback application");
+                }
+            }
             default -> {
 
             }
@@ -1416,7 +1570,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void inlineFeedback(Update update) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         int messageId = update.getCallbackQuery().getMessage().getMessageId();
-        String textToSend = "<b>Раздел отзывов</b> :speech_balloon:";
+        String textToSend = "<b>Раздел отзывов</b> :speaking_head_in_silhouette:";
 
         EditMessageText message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_MENU));
 

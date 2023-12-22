@@ -43,14 +43,23 @@ public class CallbackConstants {
     // РАЗДЕЛ "ОТЗЫВЫ"
     public static final String FEEDBACK_SHOW = "FEEDBACK_SHOW";
     public static final String FEEDBACK_NEW = "FEEDBACK_NEW";
+    public static final String FEEDBACK_SHOW_MY = "FEEDBACK_SHOW_MY";
+    public static final String FEEDBACK_SHOW_ALL = "FEEDBACK_SHOW_ALL";
 
+    // РАЗДЕЛЫ С ЛИСТИНГОМ ОТЗЫВОВ
+    public static final String FEEDBACK_LIST_PREVIOUS = "FEEDBACK_LIST_PREVIOUS";
+    public static final String FEEDBACK_LIST_NEXT = "FEEDBACK_LIST_NEXT";
+    public static final String FEEDBACK_LIST_APPROVE = "FEEDBACK_LIST_APPROVE"; // одобрить
+    public static final String FEEDBACK_LIST_ADD = "FEEDBACK_LIST_ADD";
+    public static final String FEEDBACK_LIST_EDIT = "FEEDBACK_LIST_EDIT";
+    public static final String FEEDBACK_LIST_DELETE = "FEEDBACK_LIST_DELETE";
 
     // РАЗДЕЛ "ОСТАВИТЬ ОТЗЫВ"
-    public static final String FEEDBACK_NEW_1 = "FEEDBACK_1";
-    public static final String FEEDBACK_NEW_2 = "FEEDBACK_2";
-    public static final String FEEDBACK_NEW_3 = "FEEDBACK_3";
-    public static final String FEEDBACK_NEW_4 = "FEEDBACK_4";
-    public static final String FEEDBACK_NEW_5 = "FEEDBACK_5";
+    public static final String FEEDBACK_NEW_RATE_1 = "FEEDBACK_NEW_RATE_1";
+    public static final String FEEDBACK_NEW_RATE_2 = "FEEDBACK_NEW_RATE_2";
+    public static final String FEEDBACK_NEW_RATE_3 = "FEEDBACK_NEW_RATE_3";
+    public static final String FEEDBACK_NEW_RATE_4 = "FEEDBACK_NEW_RATE_4";
+    public static final String FEEDBACK_NEW_RATE_5 = "FEEDBACK_NEW_RATE_5";
 
 
     // РАЗДЕЛ "ВОЛОНТЕРСТВО"
