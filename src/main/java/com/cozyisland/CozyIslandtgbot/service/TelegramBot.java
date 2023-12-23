@@ -112,7 +112,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             "<b>Характер:</b> %s%n%n" +
             "<i>%d/%d</i>";
     static final String VOLUNTEER_APPLICATION_TEMPLATE = "<b>Заявка на волонтерство</b>%n%n" +
-            "<b>ID пользователя:</b> %d%n" +
             "<b>Имя:</b> %s%n" +
             "<b>Телефон:</b> <code>%s</code>%n" +
             "<b>Имя пользователя:</b> @%s%n" +
@@ -126,7 +125,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             "<b>Возраст:</b> %s%n" +
             "<b>Стерилизован(а):</b> %s%n%n" +
 
-            "<b>ID пользователя:</b> %d%n" +
             "<b>Имя:</b> %s%n" +
             "<b>Телефон:</b> <code>%s</code>%n" +
             "<b>Имя пользователя:</b> @%s%n" +
@@ -155,6 +153,18 @@ public class TelegramBot extends TelegramLongPollingBot {
             "Ваша заявка на волонтерство одобрена%n" +
             "Можете подъезжать на адрес ул. Пушкина, дом 1%n" +
             "%s в рабочее время в назначенную дату";
+    static final String FEEDBACK_USER_TEMPLATE = "<b>Отзыв пользователя</b> %s%n%n" +
+            "<b>Оценка:</b> %d:star:%n" +
+            "<b>Отзыв:</b> %s%n" +
+            "<i>Отзыв от %s</i>%n%n" +
+            "<i>%d/%d</i>";
+    static final String FEEDBACK_ADMIN_TEMPLATE = "<b>Отзыв пользователя</b> %s%n%n" +
+            "<b>ID пользователя:</b> %d%n" +
+            "<b>Оценка:</b> %d:star:%n" +
+            "<b>Отзыв:</b> %s%n" +
+            "<i>Отзыв от %s</i>%n" +
+            "<b>Статус заявки:</b> %s%n%n" +
+            "<i>%d/%d</i>";
     final BotConfig config;
     List<Long> superUsers;
     List<BotCommand> listOfCommands;
@@ -287,7 +297,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                         // inlineMyFeedback(update);
                     }
                     case CallbackConstants.FEEDBACK_NEW -> {
-                        // FIXME если телефон уже есть не просить его отправить
                         contactRequestWarning(update, ItemType.FEEDBACK);
                     }
                     default -> {
@@ -695,24 +704,22 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void showItem(long chatId, int currentIndex, ItemType itemType) {
+        EditMessageText message = null;
         switch (itemType) {
             case PET -> {
                 if (this.petList.isEmpty()) {
                     String textToSend = "На данный момент в приюте нет ни одного питомца";
-                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.PETS_MENU));
-                    executeMessage(message);
+                    message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.PETS_MENU));
                 } else {
                     Pet currentPet = this.petList.get(currentIndex);
                     String petInfo = itemTemplateInsert(chatId, currentPet);
-                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), petInfo, customInlineMarkup(chatId, InlineMarkupType.PETS_MENU));
-                    executeMessage(message);
+                    message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), petInfo, customInlineMarkup(chatId, InlineMarkupType.PETS_MENU));
                 }
             }
             case VOLUNTEER_APPLICATION -> {
                 if (reloadVolunteerApplicationList(chatId).isEmpty()) {
                     String textToSend = "На данный момент нет ни одной заявки на волонтерство";
-                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_APPLICATION_MENU));
-                    executeMessage(message);
+                    message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_APPLICATION_MENU));
                 } else {
                     VolunteerApplication currentApplication;
                     if (superUsers.contains(chatId)) {
@@ -721,15 +728,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                         currentApplication = reloadVolunteerApplicationList(chatId).get(currentIndex);
                     }
                     String volunteerApplicationInfo = itemTemplateInsert(chatId, currentApplication);
-                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), volunteerApplicationInfo, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_APPLICATION_MENU));
-                    executeMessage(message);
+                    message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), volunteerApplicationInfo, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_APPLICATION_MENU));
                 }
             }
             case PET_CLAIM_APPLICATION -> {
                 if (reloadPetClaimApplicationList(chatId).isEmpty()) {
                     String textToSend = "На данный момент нет ни одной заявки на питомца";
-                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.PET_CLAIM_APPLICATION_MENU));
-                    executeMessage(message);
+                    message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.PET_CLAIM_APPLICATION_MENU));
                 } else {
                     PetClaimApplication currentApplication;
                     if (superUsers.contains(chatId)) {
@@ -738,29 +743,47 @@ public class TelegramBot extends TelegramLongPollingBot {
                         currentApplication = reloadPetClaimApplicationList(chatId).get(currentIndex);
                     }
                     String petClaimApplicationInfo = itemTemplateInsert(chatId, currentApplication);
-                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), petClaimApplicationInfo, customInlineMarkup(chatId, InlineMarkupType.PET_CLAIM_APPLICATION_MENU));
-                    executeMessage(message);
+                    message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), petClaimApplicationInfo, customInlineMarkup(chatId, InlineMarkupType.PET_CLAIM_APPLICATION_MENU));
                 }
             }
             case FEEDBACK_ALL -> {
-                if (reloadPetClaimApplicationList(chatId).isEmpty()) {
+                if (reloadFeedbackList(chatId, FeedbackType.ALL).isEmpty()) {
                     String textToSend = "На данный момент у нашего приюта нет ни одного отзыва";
-                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
+                    message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
                     executeMessage(message);
                 } else {
-                    // TODO: реализовать вывод списка отзывов
-                    PetClaimApplication currentApplication;
-                    if (superUsers.contains(chatId)) {
-                        currentApplication = this.petClaimApplicationList.get(currentIndex);
-                    } else {
-                        currentApplication = reloadPetClaimApplicationList(chatId).get(currentIndex);
-                    }
-                    String petClaimApplicationInfo = itemTemplateInsert(chatId, currentApplication);
-                    EditMessageText message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), petClaimApplicationInfo, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
+                    Feedback currentFeedback;
+                    currentFeedback = reloadFeedbackList(chatId, FeedbackType.ALL).get(currentIndex);
+                    String textToSend = itemTemplateInsert(chatId, currentFeedback);
+                    message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
+                }
+            }
+            case FEEDBACK_MY -> {
+                if (reloadFeedbackList(chatId, FeedbackType.MY).isEmpty()) {
+                    String textToSend = "На данный момент у вас нет ни одного отзыва";
+                    message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
                     executeMessage(message);
+                } else {
+                    Feedback currentFeedback;
+                    currentFeedback = reloadFeedbackList(chatId, FeedbackType.MY).get(currentIndex);
+                    String textToSend = itemTemplateInsert(chatId, currentFeedback);
+                    message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
+                }
+            }
+            case FEEDBACK_TO_APPROVE -> {
+                if (reloadFeedbackList(chatId, FeedbackType.TO_APPROVE).isEmpty()) {
+                    String textToSend = "На данный момент нет отзывов на рассмотрении";
+                    message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
+                    executeMessage(message);
+                } else {
+                    Feedback currentFeedback;
+                    currentFeedback = reloadFeedbackList(chatId, FeedbackType.TO_APPROVE).get(currentIndex);
+                    String textToSend = itemTemplateInsert(chatId, currentFeedback);
+                    message = editMessage(chatId, userRepository.findById(chatId).get().getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
                 }
             }
         }
+        executeMessage(message);
     }
 
     private String itemTemplateInsert(long chatId, Pet currentPet) {
@@ -811,6 +834,33 @@ public class TelegramBot extends TelegramLongPollingBot {
                 userRepository.findById(chatId).get().getCurrentListIndex() + 1,
                 petClaimApplicationList.size()
         );
+    }
+
+    private String itemTemplateInsert(long chatId, Feedback feedback) {
+        User user = userRepository.findById(feedback.getPk().getChatId()).get();
+        if (superUsers.contains(chatId)) {
+            return String.format(FEEDBACK_USER_TEMPLATE,
+                    (user.getUserName() == null) ? user.getFirstName() : "@".concat(user.getUserName()),
+                    feedback.getRate(),
+                    feedback.getFeedbackText(),
+                    feedback.getAppliedAt().toString().substring(0, feedback.getAppliedAt().toString().length() - 7),
+
+                    userRepository.findById(chatId).get().getCurrentListIndex() + 1,
+                    feedbackList.size()
+            );
+        } else {
+            return String.format(FEEDBACK_ADMIN_TEMPLATE,
+                    (user.getUserName() == null) ? user.getFirstName() : "@".concat(user.getUserName()),
+                    user.getChatId(),
+                    feedback.getRate(),
+                    feedback.getFeedbackText(),
+                    feedback.getAppliedAt().toString().substring(0, feedback.getAppliedAt().toString().length() - 7),
+                    feedback.getStatus(),
+
+                    userRepository.findById(chatId).get().getCurrentListIndex() + 1,
+                    feedbackList.size()
+            );
+        }
     }
 
     private void claimPet(Update update) {
