@@ -535,6 +535,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         executeMessage(message);
     }
 
+    // TODO: удалить отзыв
     private void deleteItem(Update update, ItemType type) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         switch (type) {
@@ -637,6 +638,30 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.VOLUNTEER_APPLICATION);
             }
+            case FEEDBACK_ALL -> {
+                if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) {
+                    setUserCurrentListIndex(chatId, reloadFeedbackList(chatId, FeedbackType.ALL).size() - 1);
+                } else {
+                    incrementUserCurrentListIndex(chatId, -1);
+                }
+                showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.FEEDBACK_ALL);
+            }
+            case FEEDBACK_MY -> {
+                if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) {
+                    setUserCurrentListIndex(chatId, reloadFeedbackList(chatId, FeedbackType.MY).size() - 1);
+                } else {
+                    incrementUserCurrentListIndex(chatId, -1);
+                }
+                showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.FEEDBACK_MY);
+            }
+            case FEEDBACK_TO_APPROVE -> {
+                if (userRepository.findById(chatId).get().getCurrentListIndex() == 0) {
+                    setUserCurrentListIndex(chatId, reloadFeedbackList(chatId, FeedbackType.TO_APPROVE).size() - 1);
+                } else {
+                    incrementUserCurrentListIndex(chatId, -1);
+                }
+                showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.FEEDBACK_TO_APPROVE);
+            }
         }
     }
 
@@ -682,6 +707,30 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
                 }
                 showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.VOLUNTEER_APPLICATION);
+            }
+            case FEEDBACK_ALL -> {
+                if (userRepository.findById(chatId).get().getCurrentListIndex() == reloadFeedbackList(chatId, FeedbackType.ALL).size() - 1) {
+                    setUserCurrentListIndex(chatId, 0);
+                } else {
+                    incrementUserCurrentListIndex(chatId, 1);
+                }
+                showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.FEEDBACK_ALL);
+            }
+            case FEEDBACK_MY -> {
+                if (userRepository.findById(chatId).get().getCurrentListIndex() == reloadFeedbackList(chatId, FeedbackType.MY).size() - 1) {
+                    setUserCurrentListIndex(chatId, 0);
+                } else {
+                    incrementUserCurrentListIndex(chatId, 1);
+                }
+                showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.FEEDBACK_MY);
+            }
+            case FEEDBACK_TO_APPROVE -> {
+                if (userRepository.findById(chatId).get().getCurrentListIndex() == reloadFeedbackList(chatId, FeedbackType.TO_APPROVE).size() - 1) {
+                    setUserCurrentListIndex(chatId, 0);
+                } else {
+                    incrementUserCurrentListIndex(chatId, 1);
+                }
+                showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.FEEDBACK_TO_APPROVE);
             }
         }
     }
