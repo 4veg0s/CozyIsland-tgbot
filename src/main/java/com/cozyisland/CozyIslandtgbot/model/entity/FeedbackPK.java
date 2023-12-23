@@ -17,6 +17,6 @@ import java.io.Serializable;
 @EqualsAndHashCode
 public class FeedbackPK implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
     private Long chatId;
 }

@@ -17,7 +17,7 @@ import java.sql.Timestamp;
 public class Feedback {
     @Id
     private FeedbackPK pk;
-    @Lob
+    @Column(length = 400)
     private String feedbackText;
     private int rate;
     @CreationTimestamp

@@ -13,7 +13,6 @@ public interface FeedbackRepository extends CrudRepository<Feedback, FeedbackPK>
     List<Feedback> findByStatusToApprove();
     @Query(value = "SELECT * FROM feedback WHERE status like 'одобрен%'", nativeQuery = true)
     List<Feedback> findByStatusApproved();
-
-    @Query(value = "SELECT * FROM feedback WHERE chatId = %?1% AND status = 'на рассмотрении'", nativeQuery = true)
+    @Query(value = "SELECT * FROM feedback WHERE chat_id = %?1% AND status = 'на рассмотрении'", nativeQuery = true)
     List<Feedback> findByChatIdAndStatusToApprove(long chatId);
 }

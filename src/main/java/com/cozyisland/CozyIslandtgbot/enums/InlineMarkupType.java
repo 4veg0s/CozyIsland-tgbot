@@ -16,5 +16,7 @@ public enum InlineMarkupType {
     // TODO
     RETURN_TO_MENU_BACK,
     VOLUNTEER_APPLICATION_MENU,
-    PROCEED_MENU
+    PROCEED_MENU,
+    YES_NO,
+    CANCEL
 }

@@ -1,9 +1,9 @@
 package com.cozyisland.CozyIslandtgbot.enums;
 
 public class CallbackConstants {
-    public static final String YES_CANCEL = "YES_CANCEL";
-    public static final String NO_CANCEL = "NO_CANCEL";
-    public static final String INLINE_CANCEL = "INLINE_CANCEL";
+    public static final String INLINE_YES = "INLINE_YES";
+    public static final String INLINE_NO = "INLINE_NO";
+    public static final String CANCEL = "CANCEL";
 
     // МЕНЮ
     public static final String DONATE = "DONATE";
@@ -22,7 +22,7 @@ public class CallbackConstants {
     public static final String PROCEED = "PROCEED"; // кнопка продолжить (ведет к запросу контакта)
 
     // РАЗДЕЛ ЗАЯВОК НА ПИТОМЦЕВ
-    public static final String PETS_CLAIM_APPLICATIONS = "PETS_CLAIM_APPLICATIONS";
+
     public static final String PETS_CLAIM_PREVIOUS = "PETS_CLAIM_PREVIOUS";
     public static final String PETS_CLAIM_NEXT = "PETS_CLAIM_NEXT";
     public static final String PETS_CLAIM_APPROVE = "PETS_CLAIM_APPROVE"; // одобрить
@@ -43,6 +43,7 @@ public class CallbackConstants {
     // РАЗДЕЛ "ОТЗЫВЫ"
     public static final String FEEDBACK_SHOW = "FEEDBACK_SHOW";
     public static final String FEEDBACK_NEW = "FEEDBACK_NEW";
+    // РАЗДЕЛ "ПРОСМОТРЕТЬ ОТЗЫВЫ"
     public static final String FEEDBACK_SHOW_MY = "FEEDBACK_SHOW_MY";
     public static final String FEEDBACK_SHOW_ALL = "FEEDBACK_SHOW_ALL";
 
@@ -64,7 +65,6 @@ public class CallbackConstants {
 
     // РАЗДЕЛ "ВОЛОНТЕРСТВО"
     public static final String VOLUNTEER_APPLY = "VOLUNTEER_APPLY";
-    public static final String VOLUNTEER_APPLICATIONS = "VOLUNTEER_APPLICATIONS";
     public static final String VOLUNTEER_APPLICATIONS_PREVIOUS = "VOLUNTEER_APPLICATIONS_PREVIOUS";
     public static final String VOLUNTEER_APPLICATIONS_NEXT = "VOLUNTEER_APPLICATIONS_NEXT";
     public static final String VOLUNTEER_APPLICATIONS_APPROVE = "VOLUNTEER_APPLICATIONS_APPROVE"; // одобрить
@@ -76,6 +76,10 @@ public class CallbackConstants {
     //public static final String VOLUNTEER_APPLICATIONS_ADD_CONFIRM = "VOLUNTEER_APPLICATIONS_ADD_CONFIRM";
     //public static final String VOLUNTEER_APPLICATIONS_ADD_CANCEL = "VOLUNTEER_APPLICATIONS_ADD_CANCEL";
 
+    // РАЗДЕЛ "ЗАЯВКИ"
+    public static final String PETS_CLAIM_APPLICATIONS = "PETS_CLAIM_APPLICATIONS";
+    public static final String VOLUNTEER_APPLICATIONS = "VOLUNTEER_APPLICATIONS";
+    public static final String FEEDBACKS_TO_APPROVE = "FEEDBACKS_TO_APPROVE";
     public static final String RETURN_TO_MENU = "RETURN_TO_MENU";
     public static final String BACK = "BACK";
 }
