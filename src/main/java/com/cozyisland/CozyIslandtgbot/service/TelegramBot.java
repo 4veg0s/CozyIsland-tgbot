@@ -155,14 +155,14 @@ public class TelegramBot extends TelegramLongPollingBot {
             "%s в рабочее время в назначенную дату";
     static final String FEEDBACK_USER_TEMPLATE = "<b>Отзыв пользователя</b> %s%n%n" +
             "<b>Оценка:</b> %d:star:%n" +
-            "<b>Отзыв:</b> %s%n" +
-            "<i>Отзыв от %s</i>%n%n" +
+            "<b>Отзыв:</b> %s%n%n" +
+            "<b>Дата:</b> %s%n" +
             "<i>%d/%d</i>";
     static final String FEEDBACK_ADMIN_TEMPLATE = "<b>Отзыв пользователя</b> %s%n%n" +
             "<b>ID пользователя:</b> %d%n" +
             "<b>Оценка:</b> %d:star:%n" +
-            "<b>Отзыв:</b> %s%n" +
-            "<i>Отзыв от %s</i>%n" +
+            "<b>Отзыв:</b> %s%n%n" +
+            "<b>Дата:</b> %s%n" +
             "<b>Статус заявки:</b> %s%n%n" +
             "<i>%d/%d</i>";
     final BotConfig config;
@@ -310,7 +310,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         } else if (callbackData.startsWith("FEEDBACK_LIST")) {
                             switch (callbackData) {
                                 case CallbackConstants.FEEDBACK_LIST_PREVIOUS -> {
-                                    previousItem(update, ItemType.VOLUNTEER_APPLICATION);
+                                    previousItem(update, ItemType.FEEDBACK);
                                 }
                                 case CallbackConstants.FEEDBACK_LIST_NEXT -> {
                                     nextItem(update, ItemType.FEEDBACK);
@@ -319,7 +319,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                                     deleteItem(update, ItemType.FEEDBACK);
                                 }
                                 case CallbackConstants.FEEDBACK_LIST_APPROVE -> {
-                                    approveItem(update, ItemType.FEEDBACK_TO_APPROVE);
+                                    approveItem(update, ItemType.FEEDBACK);
                                 }
                             }
                         }
@@ -451,8 +451,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             contactRequestWarning(update, ItemType.FEEDBACK);
         } else {
             feedbackRate(update);
-            // TODO: поставить оценку -> хотите написать описание? (да / нет) да -> получить описание; нет -> registerItem
-            //registerItemApplication(update, ItemType.FEEDBACK);
         }
     }
 
@@ -1050,12 +1048,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private String itemTemplateInsert(long chatId, Feedback feedback) {
         User user = userRepository.findById(feedback.getPk().getChatId()).get();
-        if (superUsers.contains(chatId)) {
+        if (!superUsers.contains(chatId)) {
             return String.format(FEEDBACK_USER_TEMPLATE,
                     (user.getUserName() == null) ? user.getFirstName() : "@".concat(user.getUserName()),
                     feedback.getRate(),
                     (feedback.getFeedbackText() == null || feedback.getFeedbackText().isBlank()) ? "без описания": feedback.getFeedbackText(),
-                    feedback.getAppliedAt().toString().substring(0, feedback.getAppliedAt().toString().length() - 7),
+                    feedback.getAppliedAt().toString().substring(0, 10),
 
                     userRepository.findById(chatId).get().getCurrentListIndex() + 1,
                     feedbackList.size()
@@ -1066,7 +1064,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     user.getChatId(),
                     feedback.getRate(),
                     (feedback.getFeedbackText() == null || feedback.getFeedbackText().isBlank()) ? "без описания": feedback.getFeedbackText(),
-                    feedback.getAppliedAt().toString().substring(0, feedback.getAppliedAt().toString().length() - 7),
+                    feedback.getAppliedAt().toString().substring(0, 10),
                     feedback.getStatus(),
 
                     userRepository.findById(chatId).get().getCurrentListIndex() + 1,
@@ -1193,10 +1191,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         );
     }*/
 
-    // TODO: одобрить отзыв
     private void approveItem(Update update, ItemType type) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
-        int currentIndex = userRepository.findById(chatId).get().getCurrentListIndex();
+        User user = userRepository.findById(chatId).get();
+        int currentIndex = user.getCurrentListIndex();
         switch (type) {
             case PET_CLAIM_APPLICATION -> {
                 PetClaimApplication chosenApplication = petClaimApplicationList.get(currentIndex);
@@ -1249,7 +1247,38 @@ public class TelegramBot extends TelegramLongPollingBot {
                     log.error("Couldn't find volunteer application in repository: " + chosenApplication);
                 }
             }
-            // TODO: вложить в кейс для FEEDBACK и проверить по UserState в каком он разделе
+            case FEEDBACK -> {
+                UserState userState = user.getState();
+                switch (userState) {
+                    case FEEDBACK_LIST_ALL -> {
+                        List<Feedback> currentFeedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
+                        Feedback chosenFeedback = currentFeedbackList.get(currentIndex);
+                        chosenFeedback.setStatus("одобрен");
+                        feedbackRepository.save(chosenFeedback);
+                        feedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
+                        log.info("Feedback updated to approved status in repository: " + chosenFeedback);
+                    }
+                    case FEEDBACK_LIST_MY -> {
+                        List<Feedback> currentFeedbackList = reloadFeedbackList(chatId, FeedbackType.MY);
+                        Feedback chosenFeedback = currentFeedbackList.get(currentIndex);
+                        chosenFeedback.setStatus("одобрен");
+                        feedbackRepository.save(chosenFeedback);
+                        feedbackList = reloadFeedbackList(chatId, FeedbackType.MY);
+                        log.info("Feedback updated to approved status in repository: " + chosenFeedback);
+                    }
+                    case APPLICATIONS -> {
+                        List<Feedback> currentFeedbackList = reloadFeedbackList(chatId, FeedbackType.TO_APPROVE);
+                        Feedback chosenFeedback = currentFeedbackList.get(currentIndex);
+                        chosenFeedback.setStatus("одобрен");
+                        feedbackRepository.save(chosenFeedback);
+                        feedbackList = reloadFeedbackList(chatId, FeedbackType.TO_APPROVE);
+                        log.info("Feedback updated to approved status in repository: " + chosenFeedback);
+                    }
+                }
+
+                setUserCurrentListIndex(chatId, feedbackList.size() - 1);
+                showItem(chatId, feedbackList.size() - 1, ItemType.FEEDBACK);
+            }
         }
     }
 
@@ -1422,7 +1451,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Добавить", CallbackConstants.PETS_CLAIM_ADD))));
                 }*/
 
-                if (!feedbackList.isEmpty()) {
+                if (!feedbackList.isEmpty() && superUsers.contains(chatId)) {
                     rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Удалить", CallbackConstants.FEEDBACK_LIST_DELETE))));
                 }
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":arrow_left:Назад", CallbackConstants.FEEDBACK_SHOW))));
@@ -1437,7 +1466,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 keyboardMarkup.setKeyboard(rowsInline);
             }
             case PROCEED_MENU -> {
-                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Продолжить", CallbackConstants.PROCEED))));
+                rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Отправить контакт", CallbackConstants.PROCEED))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
@@ -1672,17 +1701,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         EditMessageText message;
 
         feedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
-        if (feedbackRepository.findByChatIdAndStatusToApprove(chatId).size() < 4) {
+        if (feedbackRepository.findByChatIdAndStatusToApprove(chatId).size() < 2) {
             feedbackRepository.save(partialFeedback);
 
             feedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
-            adminNotification(NotificationType.FEEDBACK);
             log.info("New partial feedback saved to repository: " + partialFeedback);
 
             textToSend = "Хотите добавить описание к Вашему отзыву?";
             message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.YES_NO));
         } else {
-            textToSend = "К сожалению, вы не можете оставить отзыв, если 3 ваших отзыва находится на рассмотрении\n" +
+            textToSend = "К сожалению, вы не можете оставить отзыв, если 2 ваших отзыва находятся на рассмотрении\n" +
                     "Ожидайте, пожалуйста\n\n" +
                     "<i>Просмотреть свои отзывы и взаимодействовать с ними Вы можете в подразделе \"Мои отзывы\" раздела \"Отзывы\"</i>";
             message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.RETURN_TO_MENU));
@@ -1749,33 +1777,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                     textToSend = "Ваша предыдущая заявка на просмотр питомца по кличке " + chosenPet.getName() + " уже находится в обработке\n" +
                             "Ожидайте, пожалуйста\n\n" +
                             "<i>Просмотреть свои заявки и взаимодействовать с ними Вы можете в разделе \"Мои заявки\" главного меню</i>";
-                }
-            }
-            case FEEDBACK -> {
-                // FIXME вытащить регистрацию отзыва отсюда
-                feedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
-                FeedbackPK feedbackPK = FeedbackPK.builder()
-                        .chatId(chatId)
-                        .build();
-                if (feedbackRepository.findByChatIdAndStatusToApprove(feedbackPK.getChatId()).size() < 3) {
-                    Feedback feedback = Feedback.builder()
-                            .pk(feedbackPK)
-                            .status("на рассмотрении")
-                            .build();
-
-                    feedbackRepository.save(feedback);
-
-                    feedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
-                    adminNotification(NotificationType.FEEDBACK);
-                    log.info("New feedback saved to repository: " + feedback);
-
-                    textToSend = "Ваш отзыв отправлен на рассмотрение модератором и будет опубликован после одобрения\n" +
-                            "Ожидайте, пожалуйста\n\n" +
-                            "<i>Просмотреть свои отзывы и взаимодействовать с ними Вы можете в подразделе \"Мои отзывы\" раздела \"Отзывы\"</i>";
-                } else {
-                    textToSend = "К сожалению, вы не можете оставить отзыв, если 3 ваших отзыва находится на рассмотрении\n" +
-                            "Ожидайте, пожалуйста\n\n" +
-                            "<i>Просмотреть свои отзывы и взаимодействовать с ними Вы можете в подразделе \"Мои отзывы\" раздела \"Отзывы\"</i>";
                 }
             }
         }
@@ -2187,8 +2188,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         DeleteMessage deleteMenuMessage = new DeleteMessage(Long.toString(chatId), user.getMenuMessageId());
         deleteMessage(deleteMenuMessage);
         message.setChatId(chatId);
-        message.setText(textToSend);
         message.setParseMode(ParseMode.HTML);
+        message.setText(EmojiParser.parseToUnicode(textToSend));
         setUserMenuMessageId(chatId, executeMessage(message));
     }
 

@@ -4,6 +4,7 @@ import com.cozyisland.CozyIslandtgbot.model.entity.Feedback;
 import com.cozyisland.CozyIslandtgbot.model.entity.FeedbackPK;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
