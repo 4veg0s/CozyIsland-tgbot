@@ -22,5 +22,5 @@ public class Pet {
     private boolean sterilized;
     @Column(length = 250000)
     private String about = "не указан";
-    private Long imageId;
+    private String imageId;
 }

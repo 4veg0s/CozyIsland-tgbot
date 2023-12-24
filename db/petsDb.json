@@ -6,7 +6,7 @@
     "age": "2 года",
     "sterilized": true,
     "about": "игривый, ласковый",
-    "imageId": 0
+    "imageId": "image/animal0.png"
   },
   {
     "id": "656366a9de1090eddc1e57c9",
@@ -15,7 +15,7 @@
     "age": "4 года",
     "sterilized": true,
     "about": "спокойный, послушный",
-    "imageId": 1
+    "imageId": "image/animal1.png"
   },
   {
     "id": "656366a9c8a3ee9d900ec37d",
@@ -24,7 +24,7 @@
     "age": "3 месяца",
     "sterilized": false,
     "about": "озорной, любвеобильный",
-    "imageId": 2
+    "imageId": "image/animal2.png"
   },
   {
     "id": "656366a927dae3a9322e0a06",
@@ -33,7 +33,7 @@
     "age": "3 года",
     "sterilized": true,
     "about": "любит поспать, разговорчивый",
-    "imageId": 3
+    "imageId": "image/animal3.png"
   },
   {
     "id": "656366a91332ab60de1f212d",
@@ -42,7 +42,7 @@
     "age": "4 месяца",
     "sterilized": false,
     "about": "любит поиграть, послушная",
-    "imageId": 4
+    "imageId": "image/animal4.png"
   },
   {
     "id": "656366a9f24288ea5ad1ef93",
@@ -51,7 +51,7 @@
     "age": "4 года",
     "sterilized": false,
     "about": "любит гулять, игривая",
-    "imageId": 5
+    "imageId": "image/animal5.png"
   },
   {
     "id": "656366a99275a02fd0d38fde",
@@ -60,7 +60,7 @@
     "age": "2 года",
     "sterilized": false,
     "about": "скромный, тактильный",
-    "imageId": 6
+    "imageId": "image/animal6.png"
   },
   {
     "id": "65637b578db8a601e487f805",
@@ -69,7 +69,7 @@
     "age": "6 месяцев",
     "sterilized": false,
     "about": "аккуратная, ласковая",
-    "imageId": 7
+    "imageId": "image/animal7.png"
   },
   {
     "id": "65637b57a89161e6214a9e46",
@@ -78,7 +78,7 @@
     "age": "4 года",
     "sterilized": false,
     "about": "умный, любит поспать",
-    "imageId": 8
+    "imageId": "image/animal8.png"
   },
   {
     "id": "65637b57ba2bbd7f5f35dbf3",
@@ -87,7 +87,7 @@
     "age": "1 год",
     "sterilized": false,
     "about": "смешная, тактильная",
-    "imageId": 9
+    "imageId": "image/animal9.png"
   },
   {
     "id": "65637b575bd98ad01df10b9b",
@@ -96,7 +96,7 @@
     "age": "2 месяца",
     "sterilized": false,
     "about": "послушная, милая",
-    "imageId": 10
+    "imageId": "image/animal10.png"
   },
   {
     "id": "65637b5700250b799791271f",
@@ -105,7 +105,7 @@
     "age": "5 лет",
     "sterilized": true,
     "about": "понимающий, любит помогать",
-    "imageId": 11
+    "imageId": "image/animal11.png"
   },
   {
     "id": "65637b57e93079ea14e78528",
@@ -114,7 +114,7 @@
     "age": "1 месяц",
     "sterilized": false,
     "about": "ласковый, любит поиграть",
-    "imageId": 12
+    "imageId": "image/animal12.png"
   },
   {
     "id": "65637b5702b5687fbe491926",
@@ -123,7 +123,7 @@
     "age": "9 месяцев",
     "sterilized": false,
     "about": "любит поспать, тактильный",
-    "imageId": 13
+    "imageId": "image/animal13.png"
   },
   {
     "id": "65637b57082c3df01521183b",
@@ -132,7 +132,7 @@
     "age": "6 лет",
     "sterilized": true,
     "about": "спокойный, послушный",
-    "imageId": 14
+    "imageId": "image/animal14.png"
   },
   {
     "id": "65637e199e255819320acbca",
@@ -141,7 +141,7 @@
     "age": "7 месяцев",
     "sterilized": false,
     "about": "активный, любит гулять",
-    "imageId": 15
+    "imageId": "image/animal15.png"
   },
   {
     "id": "65637e19a6e36f0e44dd7fe4",
@@ -150,7 +150,7 @@
     "age": "2 года",
     "sterilized": false,
     "about": "понимающий, послушный",
-    "imageId": 16
+    "imageId": "image/animal16.png"
   },
   {
     "id": "65637e198cdc3efa2405897c",
@@ -159,6 +159,6 @@
     "age": "6 месяцев",
     "sterilized": false,
     "about": "озорной, игривый",
-    "imageId": 17
+    "imageId": "image/animal17.png"
   }
 ]

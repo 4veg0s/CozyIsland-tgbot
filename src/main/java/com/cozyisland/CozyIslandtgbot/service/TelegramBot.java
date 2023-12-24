@@ -2203,14 +2203,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         Pet transientNewPet = new Pet();
 
         //              0               1                 2                          3               4
-        // "category": "Кошка", "name": "Искорка", "age": "6 месяцев", "sterilized": false, "about": "аккуратная, ласковая", "imageId": 7
+        // "category": "Кошка", "name": "Искорка", "age": "6 месяцев", "sterilized": false, "about": "аккуратная, ласковая", "imageId": image/animal17.png
 
         transientNewPet.setCategory(petObject[0]);
         transientNewPet.setName(petObject[1]);
         transientNewPet.setAge(petObject[2]);
         transientNewPet.setSterilized(Boolean.parseBoolean(petObject[3]));
         transientNewPet.setAbout(petObject[4]);
-        transientNewPet.setImageId((long) petList.size());
+        transientNewPet.setImageId(petObject[5]);
 
         return transientNewPet;
     }
