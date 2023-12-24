@@ -11,6 +11,7 @@ public class CallbackConstants {
     public static final String FEEDBACK = "FEEDBACK";
     public static final String VOLUNTEER = "VOLUNTEER";
     public static final String APPLICATIONS = "APPLICATIONS";
+    public static final String ADMIN_PANEL = "ADMIN_PANEL";
 
     // РАЗДЕЛ "ПИТОМЦЫ"
     public static final String PETS_PREVIOUS = "PETS_PREVIOUS";

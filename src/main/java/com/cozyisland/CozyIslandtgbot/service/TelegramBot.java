@@ -28,6 +28,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRem
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.BufferedOutputStream;
@@ -360,6 +361,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             } else if (callbackData.startsWith("INLINE_")) {
                 responseYesNo(update);
+            } else if (callbackData.startsWith("ADMIN_PANEL")) {
+                inlineAdminPanel(update);
             }
             switch (callbackData) {
                 case CallbackConstants.PROCEED:
@@ -373,6 +376,51 @@ public class TelegramBot extends TelegramLongPollingBot {
                     break;
             }
         }
+    }
+
+    private void inlineAdminPanel(Update update) {
+        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        String textToSend = "Переход в админ-панель:point_down:";
+
+        DeleteMessage menuMessage = new DeleteMessage();
+        menuMessage.setChatId(chatId);
+        menuMessage.setMessageId(userRepository.findById(chatId).get().getMenuMessageId());
+        deleteMessage(menuMessage);
+
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        replyKeyboardMarkup.setSelective(true);
+        replyKeyboardMarkup.setIsPersistent(false);
+        replyKeyboardMarkup.setOneTimeKeyboard(false);
+
+        KeyboardButton adminPanelButton = new KeyboardButton();
+        adminPanelButton.setWebApp(new WebAppInfo("https://maksstv.github.io/second_site/"));
+        adminPanelButton.setText(EmojiParser.parseToUnicode("Админ-панель"));
+
+        KeyboardButton mainMenuButton = new KeyboardButton();
+        mainMenuButton.setText(EmojiParser.parseToUnicode("Главное меню"));
+
+
+        List<KeyboardRow> keyboardRows = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+        row.add(adminPanelButton);
+
+        keyboardRows.add(row);
+
+        row = new KeyboardRow();
+        row.add(mainMenuButton);
+
+        keyboardRows.add(row);
+
+        replyKeyboardMarkup.setKeyboard(keyboardRows);
+
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(textToSend);
+        message.setParseMode(ParseMode.HTML);
+        message.setReplyMarkup(replyKeyboardMarkup);
+
+        sendMessage(chatId, textToSend, replyKeyboardMarkup);
     }
 
     private void inlineFeedbackShowList(Update update, FeedbackType type) {
@@ -1314,6 +1362,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Отзывы", CallbackConstants.FEEDBACK))));
                 if (superUsers.contains(chatId)) {
                     rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":o:Заявки", CallbackConstants.APPLICATIONS))));
+                    rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":o:Админ-панель", CallbackConstants.ADMIN_PANEL))));
                 } else {
                     rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Мои заявки", CallbackConstants.APPLICATIONS))));
                 }
