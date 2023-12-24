@@ -46,6 +46,7 @@ import java.sql.Timestamp;
 @Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
+    private static final String ADMIN_PANEL_URL = "https://core.telegram.org/bots/webapps#initializing-mini-apps";
     private static final String DONATE_MONEY_TEXT = "Информация появится здесь позже";
     private static final String DONATE_FOOD_TEXT = "<b>Для собак:</b>\n" +
             "- <i>Chappi</i> говядина\n" +
@@ -394,7 +395,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         replyKeyboardMarkup.setOneTimeKeyboard(false);
 
         KeyboardButton adminPanelButton = new KeyboardButton();
-        adminPanelButton.setWebApp(new WebAppInfo("https://maksstv.github.io/second_site/"));
+        adminPanelButton.setWebApp(new WebAppInfo(ADMIN_PANEL_URL));
         adminPanelButton.setText(EmojiParser.parseToUnicode("Админ-панель"));
 
         KeyboardButton mainMenuButton = new KeyboardButton();
