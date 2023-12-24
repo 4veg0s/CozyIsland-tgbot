@@ -210,18 +210,18 @@ public class TelegramBot extends TelegramLongPollingBot {
             long chatId = update.getMessage().getChatId();
 
             switch (messageText) {
-                case "/start" -> {
+                case "/start":
                     startCommandReceived(update);
-                }
-                case "/menu" -> {
+                    break;
+                case "/menu":
                     menuCommandReceived(chatId);
-                }
-                case "/help" -> {
+                    break;
+                case "/help":
                     helpCommandReceived(update);
-                }
-                default -> {
+                    break;
+                default:
                     unusualMessageReceived(update);
-                }
+                    break;
             }
         } else if (update.hasMessage() && update.getMessage().hasContact()) {
             contactReceived(update);
@@ -232,163 +232,145 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             if (callbackData.startsWith("PETS_CLAIM")) {
                 switch (callbackData) {
-                    case CallbackConstants.PETS_CLAIM -> {
+                    case CallbackConstants.PETS_CLAIM:
                         claimPet(update);
-                    }
-                    case CallbackConstants.PETS_CLAIM_APPLICATIONS -> {
+                        break;
+                    case CallbackConstants.PETS_CLAIM_APPLICATIONS:
                         inlinePetClaimApplications(update);
-                    }
-                    case CallbackConstants.PETS_CLAIM_PREVIOUS -> {
+                        break;
+                    case CallbackConstants.PETS_CLAIM_PREVIOUS:
                         previousItem(update, ItemType.PET_CLAIM_APPLICATION);
-                    }
-                    case CallbackConstants.PETS_CLAIM_NEXT -> {
+                        break;
+                    case CallbackConstants.PETS_CLAIM_NEXT:
                         nextItem(update, ItemType.PET_CLAIM_APPLICATION);
-                    }
-                    case CallbackConstants.PETS_CLAIM_DELETE -> {
+                        break;
+                    case CallbackConstants.PETS_CLAIM_DELETE:
                         deleteItem(update, ItemType.PET_CLAIM_APPLICATION);
-                    }
-                    case CallbackConstants.PETS_CLAIM_APPROVE -> {
+                        break;
+                    case CallbackConstants.PETS_CLAIM_APPROVE:
                         approveItem(update, ItemType.PET_CLAIM_APPLICATION);
-                    }
-                    /*case CallbackConstants.PETS_CLAIM_ADD -> {
-                        addPetClaimApplication(update);
-                    }
-                    case CallbackConstants.PETS_ADD_CONFIRM -> {
-                        saveNewPet(update);
-                    }
-                    case CallbackConstants.PETS_ADD_CANCEL -> {
-                        addPet(update);
-                    }*/
+                        break;
                 }
             } else if (callbackData.startsWith("PETS")) {
                 switch (callbackData) {
-                    case CallbackConstants.PETS -> {
+                    case CallbackConstants.PETS:
                         inlinePets(update);
-                    }
-                    case CallbackConstants.PETS_PREVIOUS -> {
+                        break;
+                    case CallbackConstants.PETS_PREVIOUS:
                         previousItem(update, ItemType.PET);
-                    }
-                    case CallbackConstants.PETS_NEXT -> {
+                        break;
+                    case CallbackConstants.PETS_NEXT:
                         nextItem(update, ItemType.PET);
-                    }
-                    case CallbackConstants.PETS_DELETE -> {
+                        break;
+                    case CallbackConstants.PETS_DELETE:
                         deleteItem(update, ItemType.PET);
-                    }
-                    case CallbackConstants.PETS_ADD -> {
+                        break;
+                    case CallbackConstants.PETS_ADD:
                         addPet(update);
-                    }
-                    case CallbackConstants.PETS_ADD_CONFIRM -> {
+                        break;
+                    case CallbackConstants.PETS_ADD_CONFIRM:
                         saveNewPet(update);
-                    }
-                    case CallbackConstants.PETS_ADD_CANCEL -> {
+                        break;
+                    case CallbackConstants.PETS_ADD_CANCEL:
                         addPet(update);
-                    }
+                        break;
                 }
             } else if (callbackData.startsWith("FEEDBACK")) {
                 switch (callbackData) {
-                    case CallbackConstants.FEEDBACKS_TO_APPROVE -> {
+                    case CallbackConstants.FEEDBACKS_TO_APPROVE:
                         inlineFeedbackShowList(update, FeedbackType.TO_APPROVE);
-                    }
-                    case CallbackConstants.FEEDBACK -> {
+                        break;
+                    case CallbackConstants.FEEDBACK:
                         inlineFeedback(update);
-                    }
-                    case CallbackConstants.FEEDBACK_SHOW -> {
+                        break;
+                    case CallbackConstants.FEEDBACK_SHOW:
                         inlineFeedbackShow(update);
-                    }
-                    case CallbackConstants.FEEDBACK_SHOW_MY -> {
+                        break;
+                    case CallbackConstants.FEEDBACK_SHOW_MY:
                         inlineFeedbackShowList(update, FeedbackType.MY);
-                    }
-                    case CallbackConstants.FEEDBACK_SHOW_ALL -> {
+                        break;
+                    case CallbackConstants.FEEDBACK_SHOW_ALL:
                         inlineFeedbackShowList(update, FeedbackType.ALL);
-                    }
-                    case CallbackConstants.FEEDBACK_NEW -> {
+                        break;
+                    case CallbackConstants.FEEDBACK_NEW:
                         newFeedback(update);
-                    }
-                    default -> {
+                        break;
+                    default:
                         if (callbackData.startsWith("FEEDBACK_NEW_RATE")) {
                             rateFeedback(update);
                         } else if (callbackData.startsWith("FEEDBACK_LIST")) {
                             switch (callbackData) {
-                                case CallbackConstants.FEEDBACK_LIST_PREVIOUS -> {
+                                case CallbackConstants.FEEDBACK_LIST_PREVIOUS:
                                     previousItem(update, ItemType.FEEDBACK);
-                                }
-                                case CallbackConstants.FEEDBACK_LIST_NEXT -> {
+                                    break;
+                                case CallbackConstants.FEEDBACK_LIST_NEXT:
                                     nextItem(update, ItemType.FEEDBACK);
-                                }
-                                case CallbackConstants.FEEDBACK_LIST_DELETE -> {
+                                    break;
+                                case CallbackConstants.FEEDBACK_LIST_DELETE:
                                     deleteItem(update, ItemType.FEEDBACK);
-                                }
-                                case CallbackConstants.FEEDBACK_LIST_APPROVE -> {
+                                    break;
+                                case CallbackConstants.FEEDBACK_LIST_APPROVE:
                                     approveItem(update, ItemType.FEEDBACK);
-                                }
+                                    break;
                             }
                         }
-                    }
+                        break;
                 }
             } else if (callbackData.startsWith("VOLUNTEER")) {
                 switch (callbackData) {
-                    case CallbackConstants.VOLUNTEER -> {
+                    case CallbackConstants.VOLUNTEER:
                         inlineVolunteer(update);
-                    }
-                    case CallbackConstants.VOLUNTEER_APPLY -> {
+                        break;
+                    case CallbackConstants.VOLUNTEER_APPLY:
                         applyVolunteer(update);
-                    }
-                    case CallbackConstants.VOLUNTEER_APPLICATIONS -> {
+                        break;
+                    case CallbackConstants.VOLUNTEER_APPLICATIONS:
                         inlineVolunteerApplications(update);
-                    }
-                    case CallbackConstants.VOLUNTEER_APPLICATIONS_PREVIOUS -> {
+                        break;
+                    case CallbackConstants.VOLUNTEER_APPLICATIONS_PREVIOUS:
                         previousItem(update, ItemType.VOLUNTEER_APPLICATION);
-                    }
-                    case CallbackConstants.VOLUNTEER_APPLICATIONS_NEXT -> {
+                        break;
+                    case CallbackConstants.VOLUNTEER_APPLICATIONS_NEXT:
                         nextItem(update, ItemType.VOLUNTEER_APPLICATION);
-                    }
-                    case CallbackConstants.VOLUNTEER_APPLICATIONS_DELETE -> {
+                        break;
+                    case CallbackConstants.VOLUNTEER_APPLICATIONS_DELETE:
                         deleteItem(update, ItemType.VOLUNTEER_APPLICATION);
-                    }
-                    case CallbackConstants.VOLUNTEER_APPLICATIONS_APPROVE -> {
+                        break;
+                    case CallbackConstants.VOLUNTEER_APPLICATIONS_APPROVE:
                         approveItem(update, ItemType.VOLUNTEER_APPLICATION);
-                    }
-                    /*case CallbackConstants.VOLUNTEER_APPLICATIONS_ADD -> {
-                        addVolunteerApplication(update);
-                    }
-                    case CallbackConstants.VOLUNTEER_APPLICATIONS_ADD_CONFIRM -> {
-                        saveNewVolunteerApplication(update);
-                    }
-                    case CallbackConstants.VOLUNTEER_APPLICATIONS_ADD_CANCEL -> {
-                        addVolunteerApplication(update);
-                    }*/
+                        break;
                 }
             } else if (callbackData.startsWith("DONATE")) {
                 switch (callbackData) {
-                    case CallbackConstants.DONATE -> {
+                    case CallbackConstants.DONATE:
                         inlineDonate(update);
-                    }
-                    case CallbackConstants.DONATE_MONEY -> {
+                        break;
+                    case CallbackConstants.DONATE_MONEY:
                         donateMoney(update);
-                    }
-                    case CallbackConstants.DONATE_FOOD -> {
+                        break;
+                    case CallbackConstants.DONATE_FOOD:
                         donateFood(update);
-                    }
-                    case CallbackConstants.DONATE_DRUGS -> {
+                        break;
+                    case CallbackConstants.DONATE_DRUGS:
                         donateDrugs(update);
-                    }
-                    case CallbackConstants.DONATE_HOUSEKEEPING -> {
+                        break;
+                    case CallbackConstants.DONATE_HOUSEKEEPING:
                         donateHousekeeping(update);
-                    }
+                        break;
                 }
             } else if (callbackData.startsWith("INLINE_")) {
                 responseYesNo(update);
             }
             switch (callbackData) {
-                case CallbackConstants.PROCEED -> {
+                case CallbackConstants.PROCEED:
                     inlineProceed(update);
-                }
-                case CallbackConstants.RETURN_TO_MENU -> {
+                    break;
+                case CallbackConstants.RETURN_TO_MENU:
                     inlineReturnToMenu(update);
-                }
-                case CallbackConstants.APPLICATIONS -> {
+                    break;
+                case CallbackConstants.APPLICATIONS:
                     inlineApplications(update);
-                }
+                    break;
             }
         }
     }
@@ -396,15 +378,15 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void inlineFeedbackShowList(Update update, FeedbackType type) {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         switch (type) {
-            case ALL -> {
+            case ALL:
                 setUserState(chatId, UserState.FEEDBACK_LIST_ALL);
-            }
-            case MY -> {
+                break;
+            case MY:
                 setUserState(chatId, UserState.FEEDBACK_LIST_MY);
-            }
-            case TO_APPROVE -> {
+                break;
+            case TO_APPROVE:
                 setUserState(chatId, UserState.APPLICATIONS);
-            }
+                break;
         }
         feedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
         setUserCurrentListIndex(chatId, 0);
@@ -420,19 +402,19 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         if (user.getState() == UserState.FEEDBACK_STATE) {
             switch (callbackData) {
-                case CallbackConstants.INLINE_YES -> {
+                case CallbackConstants.INLINE_YES:
                     textToSend = "<b>Описание Вашего отзыва</b>\n" +
                             "Отправьте нам текст Вашего отзыва следующим сообщением (не более 300 символов):point_down:";
                     message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.CANCEL));
                     setUserState(chatId, UserState.FEEDBACK_INPUT);
-                }
-                case CallbackConstants.INLINE_NO -> {
+                    break;
+                case CallbackConstants.INLINE_NO:
                     adminNotification(NotificationType.FEEDBACK);
                     textToSend = "Ваш отзыв отправлен на рассмотрение модератором и будет опубликован после одобрения\n" +
                             "Ожидайте, пожалуйста\n\n" +
                             "<i>Просмотреть свои отзывы и взаимодействовать с ними Вы можете в подразделе \"Мои отзывы\" раздела \"Отзывы\"</i>";
                     message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.RETURN_TO_MENU));
-                }
+                    break;
             }
         }
         executeMessage(message);
@@ -632,7 +614,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         User user = userRepository.findById(chatId).get();
         int currentIndex = user.getCurrentListIndex();
         switch (type) {
-            case PET -> {
+            case PET:
                 Pet currentPet = petList.get(currentIndex);
                 if (petRepository.findById(currentPet.getId()).isEmpty()) {
                     log.error("Couldn't find pet in petRepository");
@@ -645,50 +627,51 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 petList = reloadPetList();
                 previousItem(update, ItemType.PET);
-            }
-            case PET_CLAIM_APPLICATION -> {
-                PetClaimApplication currentApplication = petClaimApplicationList.get(currentIndex);
-                if (petClaimApplicationRepository.findById(currentApplication.getPk()).isEmpty()) {
+                break;
+            case PET_CLAIM_APPLICATION:
+                PetClaimApplication currentPetClaimApplication = petClaimApplicationList.get(currentIndex);
+                if (petClaimApplicationRepository.findById(currentPetClaimApplication.getPk()).isEmpty()) {
                     log.error("Couldn't find application in petClaimApplicationRepository");
                 } else {
-                    petClaimApplicationRepository.deleteById(currentApplication.getPk());
+                    petClaimApplicationRepository.deleteById(currentPetClaimApplication.getPk());
                     DeleteMessage message = DeleteMessage.builder()
-                            .chatId(currentApplication.getPk().getChatId())
-                            .messageId(currentApplication.getNotificationMessageId())
+                            .chatId(currentPetClaimApplication.getPk().getChatId())
+                            .messageId(currentPetClaimApplication.getNotificationMessageId())
                             .build();
                     deleteMessage(message);
-                    log.info("Successfully deleted from petClaimApplicationRepository: " + currentApplication);
+                    log.info("Successfully deleted from petClaimApplicationRepository: " + currentPetClaimApplication);
                     if (currentIndex == 0)
                         incrementUserCurrentListIndex(chatId, 1);
                 }
 
                 petClaimApplicationList = reloadPetClaimApplicationList(chatId);
                 previousItem(update, ItemType.PET_CLAIM_APPLICATION);
-            }
-            case VOLUNTEER_APPLICATION -> {
-                VolunteerApplication currentApplication = volunteerApplicationList.get(currentIndex);
-                if (volunteerApplicationRepository.findById(currentApplication.getChatId()).isEmpty()) {
+                break;
+            case VOLUNTEER_APPLICATION:
+                VolunteerApplication currentVolunteerApplication = volunteerApplicationList.get(currentIndex);
+                if (volunteerApplicationRepository.findById(currentVolunteerApplication.getChatId()).isEmpty()) {
                     log.error("Couldn't find application in volunteerApplicationRepository");
                 } else {
-                    volunteerApplicationRepository.deleteById(currentApplication.getChatId());
+                    volunteerApplicationRepository.deleteById(currentVolunteerApplication.getChatId());
                     DeleteMessage message = DeleteMessage.builder()
-                            .chatId(currentApplication.getChatId())
-                            .messageId(currentApplication.getNotificationMessageId())
+                            .chatId(currentVolunteerApplication.getChatId())
+                            .messageId(currentVolunteerApplication.getNotificationMessageId())
                             .build();
                     deleteMessage(message);
-                    log.info("Successfully deleted from volunteerApplicationRepository: " + currentApplication);
+                    log.info("Successfully deleted from volunteerApplicationRepository: " + currentVolunteerApplication);
                     if (currentIndex == 0)
                         incrementUserCurrentListIndex(chatId, 1);
                 }
 
                 volunteerApplicationList = reloadVolunteerApplicationList(chatId);
                 previousItem(update, ItemType.VOLUNTEER_APPLICATION);
-            }
-            case FEEDBACK -> {
+                break;
+            case FEEDBACK:
                 UserState userState = user.getState();
+                Feedback feedback;
                 switch (userState) {
-                    case FEEDBACK_LIST_ALL -> {
-                        Feedback feedback = reloadFeedbackList(chatId, FeedbackType.ALL).get(currentIndex);
+                    case FEEDBACK_LIST_ALL:
+                        feedback = reloadFeedbackList(chatId, FeedbackType.ALL).get(currentIndex);
                         if (feedbackRepository.findById(feedback.getPk()).isEmpty()) {
                             log.error("Couldn't find feedback in feedbackRepository: " + feedback);
                         } else {
@@ -700,9 +683,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                         feedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
                         previousItem(update, ItemType.FEEDBACK);
-                    }
-                    case FEEDBACK_LIST_MY -> {
-                        Feedback feedback = reloadFeedbackList(chatId, FeedbackType.MY).get(currentIndex);
+                        break;
+                    case FEEDBACK_LIST_MY:
+                        feedback = reloadFeedbackList(chatId, FeedbackType.MY).get(currentIndex);
                         if (feedbackRepository.findById(feedback.getPk()).isEmpty()) {
                             log.error("Couldn't find feedback in feedbackRepository: " + feedback);
                         } else {
@@ -714,9 +697,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                         feedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
                         previousItem(update, ItemType.FEEDBACK);
-                    }
-                    default -> {
-                        Feedback feedback = reloadFeedbackList(chatId, FeedbackType.TO_APPROVE).get(currentIndex);
+                        break;
+                    case APPLICATIONS:
+                        feedback = reloadFeedbackList(chatId, FeedbackType.TO_APPROVE).get(currentIndex);
                         if (feedbackRepository.findById(feedback.getPk()).isEmpty()) {
                             log.error("Couldn't find feedback to approve in feedbackRepository: " + feedback);
                         } else {
@@ -728,9 +711,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                         feedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
                         previousItem(update, ItemType.FEEDBACK);
-                    }
+                        break;
                 }
-            }
+                break;
         }
     }
 
@@ -739,15 +722,15 @@ public class TelegramBot extends TelegramLongPollingBot {
         User user = userRepository.findById(chatId).get();
         int currentIndex = user.getCurrentListIndex();
         switch (type) {
-            case PET -> {
+            case PET:
                 if (currentIndex == 0) {
                     setUserCurrentListIndex(chatId, petList.size() - 1);
                 } else {
                     incrementUserCurrentListIndex(chatId, -1);
                 }
                 showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.PET);
-            }
-            case PET_CLAIM_APPLICATION -> {
+                break;
+            case PET_CLAIM_APPLICATION:
                 if (superUsers.contains(chatId)) {
                     if (currentIndex == 0) {
                         setUserCurrentListIndex(chatId, petClaimApplicationList.size() - 1);
@@ -762,8 +745,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
                 }
                 showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.PET_CLAIM_APPLICATION);
-            }
-            case VOLUNTEER_APPLICATION -> {
+                break;
+            case VOLUNTEER_APPLICATION:
                 if (superUsers.contains(chatId)) {
                     if (currentIndex == 0) {
                         setUserCurrentListIndex(chatId, volunteerApplicationList.size() - 1);
@@ -778,36 +761,36 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
                 }
                 showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.VOLUNTEER_APPLICATION);
-            }
-            case FEEDBACK -> {
+                break;
+            case FEEDBACK:
                 UserState userState = user.getState();
                 switch (userState) {
-                    case FEEDBACK_LIST_ALL -> {
+                    case FEEDBACK_LIST_ALL:
                         if (currentIndex == 0) {
                             setUserCurrentListIndex(chatId, reloadFeedbackList(chatId, FeedbackType.ALL).size() - 1);
                         } else {
                             incrementUserCurrentListIndex(chatId, -1);
                         }
                         showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.FEEDBACK);
-                    }
-                    case FEEDBACK_LIST_MY -> {
+                        break;
+                    case FEEDBACK_LIST_MY:
                         if (currentIndex == 0) {
                             setUserCurrentListIndex(chatId, reloadFeedbackList(chatId, FeedbackType.MY).size() - 1);
                         } else {
                             incrementUserCurrentListIndex(chatId, -1);
                         }
                         showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.FEEDBACK);
-                    }
-                    case APPLICATIONS -> {
+                        break;
+                    case APPLICATIONS:
                         if (currentIndex == 0) {
                             setUserCurrentListIndex(chatId, reloadFeedbackList(chatId, FeedbackType.TO_APPROVE).size() - 1);
                         } else {
                             incrementUserCurrentListIndex(chatId, -1);
                         }
                         showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.FEEDBACK);
-                    }
+                        break;
                 }
-            }
+                break;
         }
     }
 
@@ -815,15 +798,15 @@ public class TelegramBot extends TelegramLongPollingBot {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         User user = userRepository.findById(chatId).get();
         switch (type) {
-            case PET -> {
+            case PET:
                 if (userRepository.findById(chatId).get().getCurrentListIndex() == petList.size() - 1) {
                     setUserCurrentListIndex(chatId, 0);
                 } else {
                     incrementUserCurrentListIndex(chatId, 1);
                 }
                 showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.PET);
-            }
-            case PET_CLAIM_APPLICATION -> {
+                break;
+            case PET_CLAIM_APPLICATION:
                 if (superUsers.contains(chatId)) {
                     if (userRepository.findById(chatId).get().getCurrentListIndex() == petClaimApplicationList.size() - 1) {
                         setUserCurrentListIndex(chatId, 0);
@@ -838,8 +821,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
                 }
                 showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.PET_CLAIM_APPLICATION);
-            }
-            case VOLUNTEER_APPLICATION -> {
+                break;
+            case VOLUNTEER_APPLICATION:
                 if (superUsers.contains(chatId)) {
                     if (userRepository.findById(chatId).get().getCurrentListIndex() == volunteerApplicationList.size() - 1) {
                         setUserCurrentListIndex(chatId, 0);
@@ -854,36 +837,36 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
                 }
                 showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.VOLUNTEER_APPLICATION);
-            }
-            case FEEDBACK -> {
+                break;
+            case FEEDBACK:
                 UserState userState = user.getState();
                 switch (userState) {
-                    case FEEDBACK_LIST_ALL -> {
+                    case FEEDBACK_LIST_ALL:
                         if (userRepository.findById(chatId).get().getCurrentListIndex() == reloadFeedbackList(chatId, FeedbackType.ALL).size() - 1) {
                             setUserCurrentListIndex(chatId, 0);
                         } else {
                             incrementUserCurrentListIndex(chatId, 1);
                         }
                         showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.FEEDBACK);
-                    }
-                    case FEEDBACK_LIST_MY -> {
+                        break;
+                    case FEEDBACK_LIST_MY:
                         if (userRepository.findById(chatId).get().getCurrentListIndex() == reloadFeedbackList(chatId, FeedbackType.MY).size() - 1) {
                             setUserCurrentListIndex(chatId, 0);
                         } else {
                             incrementUserCurrentListIndex(chatId, 1);
                         }
                         showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.FEEDBACK);
-                    }
-                    case APPLICATIONS -> {
+                        break;
+                    case APPLICATIONS:
                         if (userRepository.findById(chatId).get().getCurrentListIndex() == reloadFeedbackList(chatId, FeedbackType.TO_APPROVE).size() - 1) {
                             setUserCurrentListIndex(chatId, 0);
                         } else {
                             incrementUserCurrentListIndex(chatId, 1);
                         }
                         showItem(chatId, userRepository.findById(chatId).get().getCurrentListIndex(), ItemType.FEEDBACK);
-                    }
+                        break;
                 }
-            }
+                break;
         }
     }
 
@@ -907,91 +890,93 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void showItem(long chatId, int currentIndex, ItemType itemType) {
         EditMessageText message = null;
         User user = userRepository.findById(chatId).get();
+        String textToSend;
         switch (itemType) {
-            case PET -> {
+            case PET:
                 if (this.petList.isEmpty()) {
-                    String textToSend = "На данный момент в приюте нет ни одного питомца";
+                    textToSend = "На данный момент в приюте нет ни одного питомца";
                     message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.PETS_MENU));
                 } else {
                     Pet currentPet = this.petList.get(currentIndex);
                     String petInfo = itemTemplateInsert(chatId, currentPet);
                     message = editMessage(chatId, user.getMenuMessageId(), petInfo, customInlineMarkup(chatId, InlineMarkupType.PETS_MENU));
                 }
-            }
-            case VOLUNTEER_APPLICATION -> {
+                break;
+            case VOLUNTEER_APPLICATION:
                 if (reloadVolunteerApplicationList(chatId).isEmpty()) {
-                    String textToSend = "На данный момент нет ни одной заявки на волонтерство";
+                    textToSend = "На данный момент нет ни одной заявки на волонтерство";
                     message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_APPLICATION_MENU));
                 } else {
-                    VolunteerApplication currentApplication;
+                    VolunteerApplication currentVolunteerApplication;
                     if (superUsers.contains(chatId)) {
-                        currentApplication = this.volunteerApplicationList.get(currentIndex);
+                        currentVolunteerApplication = this.volunteerApplicationList.get(currentIndex);
                     } else {
-                        currentApplication = reloadVolunteerApplicationList(chatId).get(currentIndex);
+                        currentVolunteerApplication = reloadVolunteerApplicationList(chatId).get(currentIndex);
                     }
-                    String volunteerApplicationInfo = itemTemplateInsert(chatId, currentApplication);
+                    String volunteerApplicationInfo = itemTemplateInsert(chatId, currentVolunteerApplication);
                     message = editMessage(chatId, user.getMenuMessageId(), volunteerApplicationInfo, customInlineMarkup(chatId, InlineMarkupType.VOLUNTEER_APPLICATION_MENU));
                 }
-            }
-            case PET_CLAIM_APPLICATION -> {
+                break;
+            case PET_CLAIM_APPLICATION:
                 if (reloadPetClaimApplicationList(chatId).isEmpty()) {
-                    String textToSend = "На данный момент нет ни одной заявки на питомца";
+                    textToSend = "На данный момент нет ни одной заявки на питомца";
                     message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.PET_CLAIM_APPLICATION_MENU));
                 } else {
-                    PetClaimApplication currentApplication;
+                    PetClaimApplication currentPetClaimApplication;
                     if (superUsers.contains(chatId)) {
-                        currentApplication = this.petClaimApplicationList.get(currentIndex);
+                        currentPetClaimApplication = this.petClaimApplicationList.get(currentIndex);
                     } else {
-                        currentApplication = reloadPetClaimApplicationList(chatId).get(currentIndex);
+                        currentPetClaimApplication = reloadPetClaimApplicationList(chatId).get(currentIndex);
                     }
-                    String petClaimApplicationInfo = itemTemplateInsert(chatId, currentApplication);
+                    String petClaimApplicationInfo = itemTemplateInsert(chatId, currentPetClaimApplication);
                     message = editMessage(chatId, user.getMenuMessageId(), petClaimApplicationInfo, customInlineMarkup(chatId, InlineMarkupType.PET_CLAIM_APPLICATION_MENU));
                 }
-            }
-            case FEEDBACK -> {
+                break;
+            case FEEDBACK:
                 UserState userState = user.getState();
+                List<Feedback> currentListState;
                 switch (userState) {
-                    case FEEDBACK_LIST_ALL -> {
+                    case FEEDBACK_LIST_ALL:
                         feedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
-                        List<Feedback> currentListState = reloadFeedbackList(chatId, FeedbackType.ALL);
+                        currentListState = reloadFeedbackList(chatId, FeedbackType.ALL);
                         if (currentListState.isEmpty() || currentListState == null) {
-                            String textToSend = "На данный момент у нашего приюта нет ни одного отзыва";
+                            textToSend = "На данный момент у нашего приюта нет ни одного отзыва";
                             message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
                         } else {
                             Feedback currentFeedback;
                             currentFeedback = currentListState.get(currentIndex);
-                            String textToSend = itemTemplateInsert(chatId, currentFeedback);
+                            textToSend = itemTemplateInsert(chatId, currentFeedback);
                             message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
                         }
-                    }
-                    case FEEDBACK_LIST_MY -> {
+                        break;
+                    case FEEDBACK_LIST_MY:
                         feedbackList = reloadFeedbackList(chatId, FeedbackType.MY);
-                        List<Feedback> currentListState = reloadFeedbackList(chatId, FeedbackType.MY);
+                        currentListState = reloadFeedbackList(chatId, FeedbackType.MY);
                         if (currentListState.isEmpty() || currentListState == null) {
-                            String textToSend = "На данный момент у вас нет ни одного отзыва";
+                            textToSend = "На данный момент у вас нет ни одного отзыва";
                             message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
                         } else {
                             Feedback currentFeedback;
                             currentFeedback = currentListState.get(currentIndex);
-                            String textToSend = itemTemplateInsert(chatId, currentFeedback);
+                            textToSend = itemTemplateInsert(chatId, currentFeedback);
                             message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
                         }
-                    }
-                    case APPLICATIONS -> {
+                        break;
+                    case APPLICATIONS:
                         feedbackList = reloadFeedbackList(chatId, FeedbackType.TO_APPROVE);
-                        List<Feedback> currentListState = reloadFeedbackList(chatId, FeedbackType.TO_APPROVE);
+                        currentListState = reloadFeedbackList(chatId, FeedbackType.TO_APPROVE);
                         if (currentListState.isEmpty() || currentListState == null) {
-                            String textToSend = "На данный момент нет отзывов на рассмотрении";
+                            textToSend = "На данный момент нет отзывов на рассмотрении";
                             message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
                         } else {
                             Feedback currentFeedback;
                             currentFeedback = currentListState.get(currentIndex);
-                            String textToSend = itemTemplateInsert(chatId, currentFeedback);
+                            textToSend = itemTemplateInsert(chatId, currentFeedback);
                             message = editMessage(chatId, user.getMenuMessageId(), textToSend, customInlineMarkup(chatId, InlineMarkupType.FEEDBACK_LIST_MENU));
                         }
-                    }
+                        break;
                 }
-            }
+                break;
         }
         executeMessage(message);
     }
@@ -1096,21 +1081,21 @@ public class TelegramBot extends TelegramLongPollingBot {
         EditMessageText message = null;
         String textToSend = null;
         switch (type) {
-            case PET_CLAIM_APPLICATION -> {
+            case PET_CLAIM_APPLICATION:
                 textToSend = "<b>Заявка на просмотр питомца</b>\n" +
                         "Чтобы продолжить, отправьте нам свой контакт";
                 message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.PROCEED_MENU));
-            }
-            case VOLUNTEER_APPLICATION -> {
+                break;
+            case VOLUNTEER_APPLICATION:
                 textToSend = "<b>Раздел волонтерства</b>\n" +
                         "Чтобы оставить заявку на волонтерскую помощь нашему приюту, отправьте нам свой контакт, и мы свяжемся с Вами";
                 message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.PROCEED_MENU));
-            }
-            case FEEDBACK -> {
+                break;
+            case FEEDBACK:
                 textToSend = "<b>Раздел отзывов:speaking_head_in_silhouette:</b>\n" +
                         "Чтобы оставить отзыв о нашем приюте, отправьте нам свой контакт";
                 message = editMessage(chatId, messageId, textToSend, customInlineMarkup(chatId, InlineMarkupType.PROCEED_MENU));
-            }
+                break;
         }
 
         executeMessage(message);
@@ -1142,7 +1127,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private List<Feedback> reloadFeedbackList(long chatId, FeedbackType type) {
         List<Feedback> list = new ArrayList<>();
         switch (type) {
-            case ALL -> {
+            case ALL:
                 if (superUsers.contains(chatId)) {
                     list = new ArrayList<>(StreamSupport
                             .stream(feedbackRepository.findAll().spliterator(), false)
@@ -1152,17 +1137,17 @@ public class TelegramBot extends TelegramLongPollingBot {
                             .stream(feedbackRepository.findByStatusApproved().spliterator(), false)
                             .collect(Collectors.toList()));
                 }
-            }
-            case MY -> {
+                break;
+            case MY:
                 list = new ArrayList<>(StreamSupport
                         .stream(feedbackRepository.findByPkChatId(chatId).spliterator(), false)
                         .collect(Collectors.toList()));
-            }
-            case TO_APPROVE -> {
+                break;
+            case TO_APPROVE:
                 list = new ArrayList<>(StreamSupport
                         .stream(feedbackRepository.findByStatusToApprove().spliterator(), false)
                         .collect(Collectors.toList()));
-            }
+                break;
         }
         return list;
     }
@@ -1196,47 +1181,47 @@ public class TelegramBot extends TelegramLongPollingBot {
         User user = userRepository.findById(chatId).get();
         int currentIndex = user.getCurrentListIndex();
         switch (type) {
-            case PET_CLAIM_APPLICATION -> {
-                PetClaimApplication chosenApplication = petClaimApplicationList.get(currentIndex);
-                PetClaimApplicationPK petClaimApplicationPK = chosenApplication.getPk();
+            case PET_CLAIM_APPLICATION:
+                PetClaimApplication chosenPetClaimApplication = petClaimApplicationList.get(currentIndex);
+                PetClaimApplicationPK petClaimApplicationPK = chosenPetClaimApplication.getPk();
 
                 if (petClaimApplicationRepository.findById(petClaimApplicationPK).isPresent()) {
                     if (petClaimApplicationRepository.findById(petClaimApplicationPK).get().getStatus().equals("на рассмотрении")) {
-                        chosenApplication.setStatus("одобрена");
+                        chosenPetClaimApplication.setStatus("одобрена");
 
                         Calendar cal = Calendar.getInstance();
                         cal.set(Calendar.HOUR_OF_DAY, 0);
                         cal.add(Calendar.DAY_OF_WEEK, 2);
-                        chosenApplication.setVisitDate(new Timestamp(cal.getTime().getTime()));
+                        chosenPetClaimApplication.setVisitDate(new Timestamp(cal.getTime().getTime()));
 
-                        petClaimApplicationRepository.save(chosenApplication);
+                        petClaimApplicationRepository.save(chosenPetClaimApplication);
 
-                        userNotification(petClaimApplicationPK.getChatId(), chosenApplication);
-                        log.info("Pet claim application updated to approved status in repository: " + chosenApplication);
+                        userNotification(petClaimApplicationPK.getChatId(), chosenPetClaimApplication);
+                        log.info("Pet claim application updated to approved status in repository: " + chosenPetClaimApplication);
 
                         petClaimApplicationList = reloadPetClaimApplicationList(chatId);
                         setUserCurrentListIndex(chatId, petClaimApplicationList.size() - 1);
                         showItem(chatId, petClaimApplicationList.size() - 1, ItemType.PET_CLAIM_APPLICATION);
                     }
                 } else {
-                    log.error("Couldn't find pet claim application in repository: " + chosenApplication);
+                    log.error("Couldn't find pet claim application in repository: " + chosenPetClaimApplication);
                 }
-            }
-            case VOLUNTEER_APPLICATION -> {
-                VolunteerApplication chosenApplication = volunteerApplicationList.get(currentIndex);
-                if (volunteerApplicationRepository.findById(chosenApplication.getChatId()).isPresent()) {
-                    if (volunteerApplicationRepository.findById(chosenApplication.getChatId()).get().getStatus().equals("на рассмотрении")) {
-                        chosenApplication.setStatus("одобрена");
+                break;
+            case VOLUNTEER_APPLICATION:
+                VolunteerApplication chosenVolunteerApplication = volunteerApplicationList.get(currentIndex);
+                if (volunteerApplicationRepository.findById(chosenVolunteerApplication.getChatId()).isPresent()) {
+                    if (volunteerApplicationRepository.findById(chosenVolunteerApplication.getChatId()).get().getStatus().equals("на рассмотрении")) {
+                        chosenVolunteerApplication.setStatus("одобрена");
 
                         Calendar cal = Calendar.getInstance();
-                        cal.setTime(chosenApplication.getAppliedAt());
+                        cal.setTime(chosenVolunteerApplication.getAppliedAt());
                         cal.add(Calendar.DAY_OF_WEEK, 1);
-                        chosenApplication.setVisitDate(new Timestamp(cal.getTime().getTime()));
+                        chosenVolunteerApplication.setVisitDate(new Timestamp(cal.getTime().getTime()));
 
-                        volunteerApplicationRepository.save(chosenApplication);
+                        volunteerApplicationRepository.save(chosenVolunteerApplication);
 
-                        userNotification(chosenApplication);
-                        log.info("Volunteer application updated to approved status in repository: " + chosenApplication);
+                        userNotification(chosenVolunteerApplication);
+                        log.info("Volunteer application updated to approved status in repository: " + chosenVolunteerApplication);
 
                         volunteerApplicationList = reloadVolunteerApplicationList(chatId);
 
@@ -1244,41 +1229,43 @@ public class TelegramBot extends TelegramLongPollingBot {
                         showItem(chatId, volunteerApplicationList.size() - 1, ItemType.VOLUNTEER_APPLICATION);
                     }
                 } else {
-                    log.error("Couldn't find volunteer application in repository: " + chosenApplication);
+                    log.error("Couldn't find volunteer application in repository: " + chosenVolunteerApplication);
                 }
-            }
-            case FEEDBACK -> {
+                break;
+            case FEEDBACK:
                 UserState userState = user.getState();
+                List<Feedback> currentFeedbackList;
+                Feedback chosenFeedback;
                 switch (userState) {
-                    case FEEDBACK_LIST_ALL -> {
-                        List<Feedback> currentFeedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
-                        Feedback chosenFeedback = currentFeedbackList.get(currentIndex);
+                    case FEEDBACK_LIST_ALL:
+                        currentFeedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
+                        chosenFeedback = currentFeedbackList.get(currentIndex);
                         chosenFeedback.setStatus("одобрен");
                         feedbackRepository.save(chosenFeedback);
                         feedbackList = reloadFeedbackList(chatId, FeedbackType.ALL);
                         log.info("Feedback updated to approved status in repository: " + chosenFeedback);
-                    }
-                    case FEEDBACK_LIST_MY -> {
-                        List<Feedback> currentFeedbackList = reloadFeedbackList(chatId, FeedbackType.MY);
-                        Feedback chosenFeedback = currentFeedbackList.get(currentIndex);
+                        break;
+                    case FEEDBACK_LIST_MY:
+                        currentFeedbackList = reloadFeedbackList(chatId, FeedbackType.MY);
+                        chosenFeedback = currentFeedbackList.get(currentIndex);
                         chosenFeedback.setStatus("одобрен");
                         feedbackRepository.save(chosenFeedback);
                         feedbackList = reloadFeedbackList(chatId, FeedbackType.MY);
                         log.info("Feedback updated to approved status in repository: " + chosenFeedback);
-                    }
-                    case APPLICATIONS -> {
-                        List<Feedback> currentFeedbackList = reloadFeedbackList(chatId, FeedbackType.TO_APPROVE);
-                        Feedback chosenFeedback = currentFeedbackList.get(currentIndex);
+                        break;
+                    case APPLICATIONS:
+                        currentFeedbackList = reloadFeedbackList(chatId, FeedbackType.TO_APPROVE);
+                        chosenFeedback = currentFeedbackList.get(currentIndex);
                         chosenFeedback.setStatus("одобрен");
                         feedbackRepository.save(chosenFeedback);
                         feedbackList = reloadFeedbackList(chatId, FeedbackType.TO_APPROVE);
                         log.info("Feedback updated to approved status in repository: " + chosenFeedback);
-                    }
+                        break;
                 }
 
                 setUserCurrentListIndex(chatId, feedbackList.size() - 1);
                 showItem(chatId, feedbackList.size() - 1, ItemType.FEEDBACK);
-            }
+                break;
         }
     }
 
@@ -1295,7 +1282,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> row = new ArrayList<>();
         switch (type) {
-            case VOLUNTEER_APPLICATION_MENU -> {
+            case VOLUNTEER_APPLICATION_MENU:
                 if (!volunteerApplicationList.isEmpty()) {
                     if (volunteerApplicationList.size() > 1)
                         row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.VOLUNTEER_APPLICATIONS_PREVIOUS));
@@ -1321,8 +1308,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case MAIN_MENU -> {
+                break;
+            case MAIN_MENU:
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Питомцы", CallbackConstants.PETS))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Пожертвовать", CallbackConstants.DONATE))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Волонтерство", CallbackConstants.VOLUNTEER))));
@@ -1333,19 +1320,19 @@ public class TelegramBot extends TelegramLongPollingBot {
                     rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Мои заявки", CallbackConstants.APPLICATIONS))));
                 }
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case PET_CLAIM_APPLICATION -> {
+                break;
+            case PET_CLAIM_APPLICATION:
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":arrow_left:Назад", CallbackConstants.PETS))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case CANCEL -> {
+                break;
+            case CANCEL:
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Отменить", CallbackConstants.CANCEL))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case PET_CLAIM_APPLICATION_MENU -> {
+                break;
+            case PET_CLAIM_APPLICATION_MENU:
                 if (!petClaimApplicationList.isEmpty()) {
                     if (petClaimApplicationList.size() > 1)
                         row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.PETS_CLAIM_PREVIOUS));
@@ -1368,8 +1355,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case PETS_MENU -> {
+                break;
+            case PETS_MENU:
                 if (!petList.isEmpty()) {
                     if (petList.size() > 1)
                         row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.PETS_PREVIOUS));
@@ -1390,8 +1377,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case DONATE_MENU -> {
+                break;
+            case DONATE_MENU:
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Деньги :money_with_wings:", CallbackConstants.DONATE_MONEY))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Корм и консервы :stew:", CallbackConstants.DONATE_FOOD))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Лекарства :pill:", CallbackConstants.DONATE_DRUGS))));
@@ -1399,8 +1386,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case FEEDBACK_NEW -> {
+                break;
+            case FEEDBACK_NEW:
                 row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_RATE_1));
                 row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_RATE_2));
                 row.add(createInlineButton(EmojiParser.parseToUnicode(":star:"), CallbackConstants.FEEDBACK_NEW_RATE_3));
@@ -1412,31 +1399,31 @@ public class TelegramBot extends TelegramLongPollingBot {
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case YES_NO -> {
+                break;
+            case YES_NO:
                 row.add(createInlineButton(EmojiParser.parseToUnicode("Да"), CallbackConstants.INLINE_YES));
                 row.add(createInlineButton(EmojiParser.parseToUnicode("Нет"), CallbackConstants.INLINE_NO));
 
                 rowsInline.add(row);
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case FEEDBACK_MENU -> {
+                break;
+            case FEEDBACK_MENU:
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Просмотреть отзывы", CallbackConstants.FEEDBACK_SHOW))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Оставить отзыв", CallbackConstants.FEEDBACK_NEW))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case FEEDBACK_SHOW -> {
+                break;
+            case FEEDBACK_SHOW:
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Все отзывы:busts_in_silhouette:", CallbackConstants.FEEDBACK_SHOW_ALL))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Мои отзывы:bust_in_silhouette:", CallbackConstants.FEEDBACK_SHOW_MY))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":arrow_left:Назад", CallbackConstants.FEEDBACK))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case FEEDBACK_LIST_MENU -> {
+                break;
+            case FEEDBACK_LIST_MENU:
                 if (!feedbackList.isEmpty()) {
                     if (feedbackList.size() > 1)
                         row.add(createInlineButton(EmojiParser.parseToUnicode(":arrow_left:"), CallbackConstants.FEEDBACK_LIST_PREVIOUS));
@@ -1458,20 +1445,20 @@ public class TelegramBot extends TelegramLongPollingBot {
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case VOLUNTEER_MENU -> {
+                break;
+            case VOLUNTEER_MENU:
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Оставить заявку", CallbackConstants.VOLUNTEER_APPLY))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case PROCEED_MENU -> {
+                break;
+            case PROCEED_MENU:
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("Отправить контакт", CallbackConstants.PROCEED))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case APPLICATIONS_MENU -> {
+                break;
+            case APPLICATIONS_MENU:
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("на питомцев:dog:", CallbackConstants.PETS_CLAIM_APPLICATIONS))));
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton("на волонтерство:handshake:", CallbackConstants.VOLUNTEER_APPLICATIONS))));
 
@@ -1482,12 +1469,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
-            case RETURN_TO_MENU -> {
+                break;
+            case RETURN_TO_MENU:
                 rowsInline.add(new ArrayList<>(Arrays.asList(createInlineButton(":leftwards_arrow_with_hook:Главное меню", CallbackConstants.RETURN_TO_MENU))));
 
                 keyboardMarkup.setKeyboard(rowsInline);
-            }
+                break;
         }
         return keyboardMarkup;
     }
@@ -1729,19 +1716,19 @@ public class TelegramBot extends TelegramLongPollingBot {
         String textToSend = null;
 
         switch (type) {
-            case VOLUNTEER_APPLICATION -> {
+            case VOLUNTEER_APPLICATION:
                 if (volunteerApplicationRepository.findById(chatId).isEmpty()) {
-                    VolunteerApplication application = VolunteerApplication.builder()
+                    VolunteerApplication volunteerApplication = VolunteerApplication.builder()
                             .chatId(chatId)
                             .status("на рассмотрении")
                             .build();
 
-                    volunteerApplicationRepository.save(application);
+                    volunteerApplicationRepository.save(volunteerApplication);
 
                     volunteerApplicationList = reloadVolunteerApplicationList(chatId);
                     setUserCurrentListIndex(chatId, volunteerApplicationList.size() - 1);
                     adminNotification(NotificationType.VOLUNTEER);
-                    log.info("Volunteer's application saved to repository: " + application);
+                    log.info("Volunteer's application saved to repository: " + volunteerApplication);
 
                     textToSend = "Ваша заявка на волонтерство передана менеджеру\n" +
                             "В ближайший рабочий день мы обработаем Вашу заявку и уведомим об этом Вас\n" +
@@ -1751,8 +1738,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     textToSend = "Ваша предыдущая заявка на волонтерство уже находится в обработке\n\n" +
                             "<i>Просмотреть свои заявки и взаимодействовать с ними Вы можете в разделе \"Мои заявки\" главного меню</i>";
                 }
-            }
-            case PET_CLAIM_APPLICATION -> {
+                break;
+            case PET_CLAIM_APPLICATION:
                 petList = reloadPetList();
                 Pet chosenPet = petList.get(user.getCurrentListIndex());
                 PetClaimApplicationPK petClaimApplicationPK = new PetClaimApplicationPK(chosenPet.getId(), chatId);
@@ -1778,7 +1765,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                             "Ожидайте, пожалуйста\n\n" +
                             "<i>Просмотреть свои заявки и взаимодействовать с ними Вы можете в разделе \"Мои заявки\" главного меню</i>";
                 }
-            }
+                break;
         }
 
         if (update.hasCallbackQuery()) {
@@ -1811,9 +1798,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void adminNotification(NotificationType type) {
+        String firstText;
         switch (type) {
-            case VOLUNTEER -> {
-                String firstText = ":bellhop_bell:<b>Новая заявка на волонтерство</b>:bellhop_bell:";
+            case VOLUNTEER:
+                firstText = ":bellhop_bell:<b>Новая заявка на волонтерство</b>:bellhop_bell:";
                 for (long adminId : superUsers) {
                     sendMessage(adminId, firstText);
                     menuCommandReceived(adminId);
@@ -1821,9 +1809,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                     showItem(adminId, volunteerApplicationList.size() - 1, ItemType.VOLUNTEER_APPLICATION);
                     log.info("Notified admin with chatId = " + adminId + " about new volunteer application");
                 }
-            }
-            case PET_CLAIM -> {
-                String firstText = ":bellhop_bell:<b>Новая заявка на просмотр питомца</b>:bellhop_bell:";
+                break;
+            case PET_CLAIM:
+                firstText = ":bellhop_bell:<b>Новая заявка на просмотр питомца</b>:bellhop_bell:";
                 for (long adminId : superUsers) {
                     sendMessage(adminId, firstText);
                     menuCommandReceived(adminId);
@@ -1831,9 +1819,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                     showItem(adminId, petClaimApplicationList.size() - 1, ItemType.PET_CLAIM_APPLICATION);
                     log.info("Notified admin with chatId = " + adminId + " about new volunteer application");
                 }
-            }
-            case FEEDBACK -> {
-                String firstText = ":bellhop_bell:<b>Новый отзыв ждет одобрения</b>:bellhop_bell:";
+                break;
+            case FEEDBACK:
+                firstText = ":bellhop_bell:<b>Новый отзыв ждет одобрения</b>:bellhop_bell:";
                 for (long adminId : superUsers) {
                     sendMessage(adminId, firstText);
                     menuCommandReceived(adminId);
@@ -1843,7 +1831,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     showItem(adminId, feedbackList.size() - 1, ItemType.FEEDBACK);
                     log.info("Notified admin with chatId = " + adminId + " about new feedback application");
                 }
-            }
+                break;
         }
     }
 
