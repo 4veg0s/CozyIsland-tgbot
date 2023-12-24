@@ -1,9 +1,9 @@
 package com.cozyisland.CozyIslandtgbot.model.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
 import lombok.*;
 
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
 import java.io.Serializable;
 
 @AllArgsConstructor

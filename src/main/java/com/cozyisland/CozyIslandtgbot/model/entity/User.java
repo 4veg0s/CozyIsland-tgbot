@@ -1,11 +1,12 @@
 package com.cozyisland.CozyIslandtgbot.model.entity;
 
 import com.cozyisland.CozyIslandtgbot.enums.UserState;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
 import lombok.*;
+
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Id;
 
 @Builder
 @NoArgsConstructor

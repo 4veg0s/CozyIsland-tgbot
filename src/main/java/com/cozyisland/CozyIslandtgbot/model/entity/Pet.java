@@ -1,7 +1,8 @@
 package com.cozyisland.CozyIslandtgbot.model.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
+
+import javax.persistence.*;
 
 @Builder
 @NoArgsConstructor
@@ -14,7 +15,6 @@ public class Pet {
 
     @Column(length = 255000)
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     private String category = "не указана";
     private String name = "не указано";

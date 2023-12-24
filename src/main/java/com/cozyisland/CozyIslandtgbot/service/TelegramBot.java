@@ -997,7 +997,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     private String itemTemplateInsert(long chatId, VolunteerApplication currentApplication) {
         User user = userRepository.findById(currentApplication.getChatId()).get();
         return String.format(VOLUNTEER_APPLICATION_TEMPLATE,
-                currentApplication.getChatId(),
                 user.getFirstName(),
                 (user.getPhoneNumber() == null) ? "не указан" : user.getPhoneNumber(),
                 (user.getUserName() == null) ? "не указано" : user.getUserName(),
@@ -1018,7 +1017,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 pet.getAge(),
                 ((pet.isSterilized()) ? "да" : "нет"),
 
-                currentApplication.getPk().getChatId(),
                 user.getFirstName(),
                 (user.getPhoneNumber() == null) ? "не указан" : user.getPhoneNumber(),
                 (user.getUserName() == null) ? "не указано" : user.getUserName(),

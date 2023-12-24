@@ -1,10 +1,10 @@
 package com.cozyisland.CozyIslandtgbot.model.entity;
 
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
 import java.sql.Timestamp;
 
 @Builder

@@ -1,7 +1,8 @@
 package com.cozyisland.CozyIslandtgbot.model.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
+
+import javax.persistence.*;
 
 @Builder
 @Getter
