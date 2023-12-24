@@ -616,7 +616,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         switch (type) {
             case PET:
                 Pet currentPet = petList.get(currentIndex);
-                if (petRepository.findById(currentPet.getId()).isEmpty()) {
+                if (!petRepository.findById(currentPet.getId()).isPresent()) {
                     log.error("Couldn't find pet in petRepository");
                 } else {
                     petRepository.deleteById(currentPet.getId());
@@ -630,7 +630,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 break;
             case PET_CLAIM_APPLICATION:
                 PetClaimApplication currentPetClaimApplication = petClaimApplicationList.get(currentIndex);
-                if (petClaimApplicationRepository.findById(currentPetClaimApplication.getPk()).isEmpty()) {
+                if (!petClaimApplicationRepository.findById(currentPetClaimApplication.getPk()).isPresent()) {
                     log.error("Couldn't find application in petClaimApplicationRepository");
                 } else {
                     petClaimApplicationRepository.deleteById(currentPetClaimApplication.getPk());
@@ -649,7 +649,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 break;
             case VOLUNTEER_APPLICATION:
                 VolunteerApplication currentVolunteerApplication = volunteerApplicationList.get(currentIndex);
-                if (volunteerApplicationRepository.findById(currentVolunteerApplication.getChatId()).isEmpty()) {
+                if (!volunteerApplicationRepository.findById(currentVolunteerApplication.getChatId()).isPresent()) {
                     log.error("Couldn't find application in volunteerApplicationRepository");
                 } else {
                     volunteerApplicationRepository.deleteById(currentVolunteerApplication.getChatId());
@@ -672,7 +672,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 switch (userState) {
                     case FEEDBACK_LIST_ALL:
                         feedback = reloadFeedbackList(chatId, FeedbackType.ALL).get(currentIndex);
-                        if (feedbackRepository.findById(feedback.getPk()).isEmpty()) {
+                        if (!feedbackRepository.findById(feedback.getPk()).isPresent()) {
                             log.error("Couldn't find feedback in feedbackRepository: " + feedback);
                         } else {
                             feedbackRepository.deleteById(feedback.getPk());
@@ -686,7 +686,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         break;
                     case FEEDBACK_LIST_MY:
                         feedback = reloadFeedbackList(chatId, FeedbackType.MY).get(currentIndex);
-                        if (feedbackRepository.findById(feedback.getPk()).isEmpty()) {
+                        if (!feedbackRepository.findById(feedback.getPk()).isPresent()) {
                             log.error("Couldn't find feedback in feedbackRepository: " + feedback);
                         } else {
                             feedbackRepository.deleteById(feedback.getPk());
@@ -700,7 +700,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         break;
                     case APPLICATIONS:
                         feedback = reloadFeedbackList(chatId, FeedbackType.TO_APPROVE).get(currentIndex);
-                        if (feedbackRepository.findById(feedback.getPk()).isEmpty()) {
+                        if (!feedbackRepository.findById(feedback.getPk()).isPresent()) {
                             log.error("Couldn't find feedback to approve in feedbackRepository: " + feedback);
                         } else {
                             feedbackRepository.deleteById(feedback.getPk());
@@ -1037,7 +1037,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             return String.format(FEEDBACK_USER_TEMPLATE,
                     (user.getUserName() == null) ? user.getFirstName() : "@".concat(user.getUserName()),
                     feedback.getRate(),
-                    (feedback.getFeedbackText() == null || feedback.getFeedbackText().isBlank()) ? "без описания": feedback.getFeedbackText(),
+                    (feedback.getFeedbackText() == null || feedback.getFeedbackText().replace(" ", "").isEmpty()) ? "без описания": feedback.getFeedbackText(),
                     feedback.getAppliedAt().toString().substring(0, 10),
 
                     userRepository.findById(chatId).get().getCurrentListIndex() + 1,
@@ -1048,7 +1048,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     (user.getUserName() == null) ? user.getFirstName() : "@".concat(user.getUserName()),
                     user.getChatId(),
                     feedback.getRate(),
-                    (feedback.getFeedbackText() == null || feedback.getFeedbackText().isBlank()) ? "без описания": feedback.getFeedbackText(),
+                    (feedback.getFeedbackText() == null || feedback.getFeedbackText().replace(" ", "").isEmpty()) ? "без описания": feedback.getFeedbackText(),
                     feedback.getAppliedAt().toString().substring(0, 10),
                     feedback.getStatus(),
 
@@ -1717,7 +1717,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         switch (type) {
             case VOLUNTEER_APPLICATION:
-                if (volunteerApplicationRepository.findById(chatId).isEmpty()) {
+                if (!volunteerApplicationRepository.findById(chatId).isPresent()) {
                     VolunteerApplication volunteerApplication = VolunteerApplication.builder()
                             .chatId(chatId)
                             .status("на рассмотрении")
@@ -1744,7 +1744,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 Pet chosenPet = petList.get(user.getCurrentListIndex());
                 PetClaimApplicationPK petClaimApplicationPK = new PetClaimApplicationPK(chosenPet.getId(), chatId);
 
-                if (petClaimApplicationRepository.findById(petClaimApplicationPK).isEmpty()) {
+                if (!petClaimApplicationRepository.findById(petClaimApplicationPK).isPresent()) {
                     PetClaimApplication petClaimApplication = PetClaimApplication.builder()
                             .pk(petClaimApplicationPK)
                             .status("на рассмотрении")
@@ -1925,7 +1925,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private User registerUser(Update update) {
         long chatId = update.getMessage().getChatId();
         User transientUser = null;
-        if (userRepository.findById(chatId).isEmpty()) {
+        if (!userRepository.findById(chatId).isPresent()) {
             transientUser = User.builder()
                     .chatId(chatId)
                     .firstName(update.getMessage().getChat().getFirstName())
@@ -2144,7 +2144,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         SendMessage message = new SendMessage();
         String feedbackText = update.getMessage().getText();
 
-        if (feedbackText.isBlank()) {
+        if (feedbackText.replace(" ", "").isEmpty()) {
             textToSend = "<b>Описание Вашего отзыва</b>:x:\n\n" +
                     ":exclamation: Описание отзыва должно содержать текст\n\n" +
                     "Отправьте нам текст Вашего отзыва следующим сообщением (не более 300 символов):point_down:";
